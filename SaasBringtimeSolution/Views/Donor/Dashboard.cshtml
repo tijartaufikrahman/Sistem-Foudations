@@ -1,0 +1,276 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Dashboard";
+    var tenant = (ViewData["Tenant"] as string) ?? "";
+    var tPrefix = !string.IsNullOrEmpty(tenant) ? $"/{tenant}" : "";
+}
+
+<style>
+    /* Scoped custom style for Donor Dashboard */
+    .donor-cta-banner {
+        background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+        box-shadow: 0 10px 25px rgba(13, 148, 136, 0.2);
+    }
+    .donor-bg-watermark {
+        right: -20px;
+        bottom: -30px;
+        font-size: 11rem;
+        opacity: 0.12;
+        transform: rotate(-15deg);
+        z-index: 1;
+    }
+    .donor-camp-title-cell {
+        max-width: 280px;
+    }
+</style>
+
+<!-- Outermost View Wrapper adhering to aturan_styling.txt -->
+<div class="row">
+    <div class="col-12">
+
+<div class="content-breadcrumb-bar justify-content-end mb-3">
+    <div class="breadcrumb-nav" id="pageBreadcrumb">
+        <span class="breadcrumb-current">Dashboard Donatur</span>
+        <span class="breadcrumb-separator">/</span>
+    </div>
+</div>
+
+<!-- 4 KPI Metrics -->
+<div class="row g-4 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card-box">
+            <div class="stat-icon bg-teal bg-opacity-10 text-teal">
+                <i class="fas fa-hand-holding-dollar"></i>
+            </div>
+            <div>
+                <p class="stat-label">Total Donasi Saya</p>
+                <h3 class="stat-value" id="statTotal">Rp 0</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card-box">
+            <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                <i class="fas fa-shapes"></i>
+            </div>
+            <div>
+                <p class="stat-label">Program Didukung</p>
+                <h3 class="stat-value" id="statCampaign">0</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card-box">
+            <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                <i class="fas fa-medal"></i>
+            </div>
+            <div>
+                <p class="stat-label">Status Donatur</p>
+                <h3 class="stat-value fs-5" id="statBadge">Sahabat Peduli</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card-box">
+            <div class="stat-icon bg-info bg-opacity-10 text-info">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div>
+                <p class="stat-label">Donasi Terakhir</p>
+                <h3 class="stat-value fs-6" id="statLastDate">-</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CTA Banner Card -->
+<div class="card border-0 rounded-4 mb-4 p-4 text-white position-relative overflow-hidden donor-cta-banner">
+    <div class="position-relative" style="z-index: 2; max-width: 650px;">
+        <span class="badge bg-white bg-opacity-20 text-white rounded-pill px-3 py-1 mb-2 font-monospace text-uppercase" style="font-size: 0.75rem;">
+            <i class="fas fa-bullhorn me-1"></i> Program Mendesak
+        </span>
+        <h4 class="fw-bold mb-2">Setiap Kebaikan Kecil Berarti Besar</h4>
+        <p class="text-white-50 mb-3 small">
+            Mari bersama-sama ulurkan tangan membantu saudara-saudara kita yang membutuhkan bantuan pangan, pendidikan, dan kesehatan darurat hari ini.
+        </p>
+        <a href="javascript:void(0)" id="btnDonorExploreCampaigns" class="btn btn-light rounded-pill px-4 fw-semibold shadow-sm" style="color:#0f766e;">
+            <i class="fas fa-search me-2"></i> Telusuri Program Terkini
+        </a>
+    </div>
+    <i class="fas fa-hand-holding-heart position-absolute text-white donor-bg-watermark"></i>
+</div>
+
+<!-- Recent Donations Table -->
+<div class="admin-card">
+    <div class="admin-card-header d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="admin-card-title mb-0">Donasi Terakhir Anda</h5>
+            <small class="text-muted">Daftar transaksi donasi terbaru yang Anda salurkan melalui platform.</small>
+        </div>
+        <a href="/Donor/History" class="btn btn-outline-brand rounded-pill btn-sm px-3 btn-donor-history">
+            Lihat Semua <i class="fas fa-arrow-right ms-1"></i>
+        </a>
+    </div>
+    <div class="admin-card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="tableRecent">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">No. Invoice</th>
+                        <th>Program Campaign</th>
+                        <th>Nominal</th>
+                        <th>Status</th>
+                        <th>Tanggal</th>
+                        <th class="pe-4 text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="6" class="text-center py-4 text-muted"><i class="fas fa-spinner fa-spin me-2"></i> Memuat data donasi...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function formatRupiah(number) {
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number || 0);
+    }
+
+    function loadDonorDashboard() {
+        var currentUser = AuthSession.getUser();
+        if (!currentUser) {
+            AuthSession.redirectToLogin();
+            return;
+        }
+
+        var currentUserId = currentUser.id || currentUser.Id;
+
+        var fParam = window.CONFIGURED_FOUNDATION_ID ? ('?foundationId=' + window.CONFIGURED_FOUNDATION_ID) : '';
+        $.ajax({
+            url: API_BASE_URL + '/donations/user/' + currentUserId + fParam,
+            type: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                var list = data || [];
+                var paidDonations = list.filter(function(d) {
+                    return (d.paymentStatus || d.status || '').toUpperCase() === 'PAID';
+                });
+
+                var total = paidDonations.reduce(function(sum, d) { return sum + (d.totalAmount || d.amount || 0); }, 0);
+                $('#statTotal').text(formatRupiah(total));
+
+                var uniqueCampaigns = new Set(paidDonations.map(function(d) { return d.campaignId; }));
+                $('#statCampaign').text(uniqueCampaigns.size);
+
+                // Donator Level
+                if (total >= 5000000 || paidDonations.length >= 10) {
+                    $('#statBadge').html('<span class="text-warning"><i class="fas fa-crown me-1"></i> Dermawan Utama</span>');
+                } else if (total >= 1000000 || paidDonations.length >= 3) {
+                    $('#statBadge').html('<span class="text-teal" style="color:#0f766e;"><i class="fas fa-heart-circle-check me-1"></i> Pejuang Kebaikan</span>');
+                } else {
+                    $('#statBadge').html('<span>Sahabat Peduli</span>');
+                }
+
+                // Last Donation Date
+                if (paidDonations.length > 0) {
+                    paidDonations.sort(function(a, b) { 
+                        return new Date(b.paidAt || b.createdAt || 0) - new Date(a.paidAt || a.createdAt || 0); 
+                    });
+                    var last = paidDonations[0];
+                    var dDate = last.paidAt || last.createdAt;
+                    $('#statLastDate').text(dDate ? new Date(dDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-');
+                } else {
+                    $('#statLastDate').text('Belum Ada');
+                }
+
+                // Render Recent 5
+                list.sort(function(a, b) { return (b.id || 0) - (a.id || 0); });
+                var recent = list.slice(0, 5);
+
+                var tbody = '';
+                if (recent.length > 0) {
+                    recent.forEach(function(d) {
+                        var campTitle = d.campaignTitle || (d.campaign ? d.campaign.title : 'Program Donasi');
+                        var st = (d.paymentStatus || d.status || 'PENDING').toUpperCase();
+                        var badgeClass = st === 'PAID' ? 'pill-active' : (st === 'PENDING' ? 'pill-pending' : 'pill-inactive');
+                        var badgeLabel = st === 'PAID' ? 'Terverifikasi' : (st === 'PENDING' ? 'Menunggu' : 'Batal');
+
+                        var dateStr = (d.paidAt || d.createdAt) ? new Date(d.paidAt || d.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
+                        var amountVal = d.totalAmount || d.amount || 0;
+
+                        var actionBtn = '';
+                        if (st === 'PAID') {
+                            actionBtn = `<a href="/PaymentStatus/${escHtml(d.invoiceNumber)}" class="btn btn-outline-teal btn-sm rounded-pill px-3" title="Kuitansi Sah">
+                                            <i class="fas fa-receipt me-1"></i> Bukti
+                                         </a>`;
+                        } else {
+                            actionBtn = `<a href="/PaymentStatus/${escHtml(d.invoiceNumber)}" class="btn btn-brand btn-sm rounded-pill px-3" title="Selesaikan Pembayaran">
+                                            <i class="fas fa-credit-card me-1"></i> Bayar
+                                         </a>`;
+                        }
+
+                        tbody += `
+                            <tr>
+                                <td class="ps-4">
+                                    <a href="/PaymentStatus/${escHtml(d.invoiceNumber)}" class="font-monospace text-decoration-none fw-semibold text-dark small">
+                                        ${escHtml(d.invoiceNumber)}
+                                    </a>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold text-truncate donor-camp-title-cell" title="${escHtml(campTitle)}">
+                                        ${escHtml(campTitle)}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fw-bold" style="color:#0f766e;">
+                                        ${formatRupiah(amountVal)}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="status-pill ${badgeClass}">
+                                        <span class="dot-indicator"></span>${badgeLabel}
+                                    </span>
+                                </td>
+                                <td class="text-muted small">${dateStr}</td>
+                                <td class="pe-4 text-center">${actionBtn}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tbody = `
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div class="text-muted mb-3">
+                                    <i class="fas fa-hand-holding-heart fa-3x" style="color:#0f766e; opacity:0.5;"></i>
+                                </div>
+                                <h6 class="fw-bold mb-1">Belum Ada Riwayat Donasi</h6>
+                                <p class="text-muted small mb-3">Kebaikan pertama Anda sedang ditunggu oleh mereka yang membutuhkan.</p>
+                                <a href="javascript:void(0)" class="btn btn-brand rounded-pill btn-sm px-4 btn-donor-start-giving">Mulai Berbagi Sekarang</a>
+                            </td>
+                        </tr>
+                    `;
+                }
+                $('#tableRecent tbody').html(tbody);
+
+                // Sinkronkan link program ke web publik yayasan donatur
+                var targetPublikUrl = '/Campaigns';
+                $('#btnDonorExploreCampaigns').attr('href', targetPublikUrl);
+                $('.btn-donor-start-giving').attr('href', targetPublikUrl);
+            },
+            error: function() {
+                $('#tableRecent tbody').html('<tr><td colspan="6" class="text-center py-4 text-danger">Gagal memuat data donasi. Silakan refresh halaman.</td></tr>');
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        $('.btn-donor-history').attr('href', '/Donor/History');
+        loadDonorDashboard();
+    });
+</script>
+}

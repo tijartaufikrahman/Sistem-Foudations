@@ -1,0 +1,248 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Profil Saya";
+}
+
+<style>
+    /* Scoped custom style for Donor Profile */
+    .donor-profile-avatar {
+        width: 100px;
+        height: 100px;
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #0d9488, #14b8a6);
+    }
+</style>
+
+<!-- Outermost View Wrapper adhering to aturan_styling.txt -->
+<div class="row">
+    <div class="col-12">
+
+<div class="content-breadcrumb-bar justify-content-end">
+    <div class="breadcrumb-nav" id="pageBreadcrumb">
+        <span class="breadcrumb-current">Profil Saya</span>
+        <span class="breadcrumb-separator">/</span>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: User Card -->
+    <div class="col-lg-4">
+        <div class="admin-card text-center p-4">
+            <div class="rounded-circle text-white d-flex align-items-center justify-content-center mx-auto shadow-sm mb-3 donor-profile-avatar" id="profileAvatar">
+                U
+            </div>
+            <h5 class="fw-bold mb-1 text-dark" id="cardProfileName">Nama Pengguna</h5>
+            <p class="text-muted small mb-3" id="cardProfileEmail">email@example.com</p>
+            
+            <div class="mb-4">
+                <span class="badge rounded-pill px-3 py-2 fw-semibold" style="background: rgba(15, 118, 110, 0.1); color: #0f766e; border: 1px solid #0f766e;">
+                    <i class="fas fa-heart me-1"></i> Donatur Terdaftar
+                </span>
+            </div>
+
+            <hr class="my-3 opacity-25">
+
+            <div class="text-start">
+                <div class="d-flex justify-content-between align-items-center mb-2 small">
+                    <span class="text-muted"><i class="fas fa-shield-check me-2" style="color:#0f766e;"></i> Status Akun</span>
+                    <span class="badge bg-success bg-opacity-10 text-success fw-bold">Aktif & Sah</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2 small">
+                    <span class="text-muted"><i class="fab fa-whatsapp me-2 text-success"></i> Notifikasi WhatsApp</span>
+                    <span class="text-muted fw-semibold" id="cardWaStatus">Siap Menerima</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center small">
+                    <span class="text-muted"><i class="fas fa-envelope-circle-check me-2 text-primary"></i> Laporan LPJ</span>
+                    <span class="text-muted fw-semibold">Otomatis Email</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Edit Form -->
+    <div class="col-lg-8">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h5 class="admin-card-title mb-0">Pengaturan Informasi Pribadi</h5>
+                <small class="text-muted">Perubahan data akan langsung disimpan ke sistem pusat.</small>
+            </div>
+            <div class="admin-card-body p-4">
+                <form id="formProfile" onsubmit="event.preventDefault(); submitProfile();">
+                    <input type="hidden" id="userId" />
+
+                    <h6 class="fw-bold text-dark mb-3">
+                        <i class="fas fa-id-card text-teal me-2" style="color:#0f766e;"></i> Data Identitas
+                    </h6>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark">Nama Lengkap <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control rounded-3" id="name" required placeholder="Masukkan nama lengkap Anda">
+                            <small class="text-muted">Nama ini akan tercetak pada kuitansi resmi donasi.</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark">Alamat Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-lock"></i></span>
+                                <input type="email" class="form-control rounded-3 bg-light border-start-0 ps-0" id="email" readonly disabled>
+                            </div>
+                            <small class="text-muted">Email terikat ke akun dan tidak dapat diubah.</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold text-dark">Nomor WhatsApp / HP</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-success"><i class="fab fa-whatsapp"></i></span>
+                            <input type="tel" class="form-control rounded-3 border-start-0 ps-0" id="phoneNumber" placeholder="Contoh: 081234567890">
+                        </div>
+                        <small class="text-muted">Digunakan untuk menerima kabar penyaluran bantuan dan bukti transaksi.</small>
+                    </div>
+
+                    <hr class="my-4 opacity-25">
+
+                    <h6 class="fw-bold text-dark mb-3">
+                        <i class="fas fa-shield-alt text-teal me-2" style="color:#0f766e;"></i> Keamanan & Kata Sandi
+                    </h6>
+                    <p class="text-muted small mb-3">Kosongkan kolom kata sandi di bawah jika Anda tidak ingin mengubahnya.</p>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark">Kata Sandi Baru</label>
+                            <input type="password" class="form-control rounded-3" id="newPassword" placeholder="Minimal 6 karakter" autocomplete="new-password">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark">Ulangi Kata Sandi Baru</label>
+                            <input type="password" class="form-control rounded-3" id="confirmPassword" placeholder="Ulangi kata sandi baru" autocomplete="new-password">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 pt-2">
+                        <button type="submit" class="btn btn-brand rounded-pill px-5 py-2 fw-semibold" id="btnSave">
+                            <i class="fas fa-save me-2"></i> Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    var currentUser = null;
+
+    function loadUserProfile() {
+        currentUser = AuthSession.getUser();
+        if (!currentUser) {
+            AuthSession.redirectToLogin();
+            return;
+        }
+
+        var uid = currentUser.id || currentUser.Id;
+        $('#userId').val(uid);
+        $('#email').val(currentUser.email);
+
+        var currentName = currentUser.name || currentUser.namaLengkap || 'Donatur';
+        $('#name').val(currentName);
+        $('#cardProfileName').text(currentName);
+        $('#cardProfileEmail').text(currentUser.email);
+        $('#profileAvatar').text(currentName.charAt(0).toUpperCase());
+
+        $.ajax({
+            url: API_BASE_URL + '/users/' + uid,
+            type: 'GET',
+            dataType: 'json',
+            success: function(u) {
+                if (u) {
+                    if (u.name) {
+                        $('#name').val(u.name);
+                        $('#cardProfileName').text(u.name);
+                        $('#profileAvatar').text(u.name.charAt(0).toUpperCase());
+                    }
+                    if (u.phoneNumber) {
+                        $('#phoneNumber').val(u.phoneNumber);
+                        $('#cardWaStatus').text(u.phoneNumber);
+                    }
+                }
+            },
+            error: function() {
+                AdminToast.error('Gagal mengambil rincian data pengguna');
+            }
+        });
+    }
+
+    function submitProfile() {
+        var uid = $('#userId').val();
+        var newPass = $('#newPassword').val();
+        var confPass = $('#confirmPassword').val();
+
+        if (newPass && newPass.length < 6) {
+            AdminToast.error('Kata sandi baru minimal 6 karakter.');
+            return;
+        }
+
+        if (newPass && newPass !== confPass) {
+            AdminToast.error('Konfirmasi kata sandi baru tidak cocok.');
+            return;
+        }
+
+        var payload = {
+            id: parseInt(uid),
+            name: $('#name').val().trim(),
+            email: $('#email').val(),
+            phoneNumber: $('#phoneNumber').val().trim(),
+            isActive: true
+        };
+
+        if (newPass) {
+            payload.password = newPass;
+        }
+
+        var $btn = $('#btnSave');
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Menyimpan...');
+
+        $.ajax({
+            url: API_BASE_URL + '/users/' + uid,
+            type: 'PUT',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function() {
+                AdminToast.success('Profil berhasil diperbarui dengan sukses!');
+
+                // Update local session
+                currentUser.name = payload.name;
+                currentUser.namaLengkap = payload.name;
+                currentUser.phoneNumber = payload.phoneNumber;
+                AuthSession.setUser(currentUser);
+
+                // Update visual labels
+                $('#cardProfileName').text(payload.name);
+                $('#profileAvatar').text(payload.name.charAt(0).toUpperCase());
+                $('#cardWaStatus').text(payload.phoneNumber || 'Siap Menerima');
+                $('#headerUserName').text(payload.name);
+
+                // Clear passwords
+                $('#newPassword').val('');
+                $('#confirmPassword').val('');
+
+                $btn.prop('disabled', false).html('<i class="fas fa-save me-2"></i> Simpan Perubahan');
+            },
+            error: function(xhr) {
+                var errMsg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Gagal menyimpan pembaruan profil.';
+                AdminToast.error(errMsg);
+                $btn.prop('disabled', false).html('<i class="fas fa-save me-2"></i> Simpan Perubahan');
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        loadUserProfile();
+    });
+</script>
+}

@@ -1,0 +1,365 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Daftar Donasi Masuk";
+}
+
+<style>
+    /* Scoped custom style for Foundation Donations */
+    .donations-prayer-btn {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .donations-campaign-cell {
+        max-width: 170px;
+        font-size: 12px;
+    }
+</style>
+
+<!-- Outermost View Wrapper adhering to aturan_styling.txt -->
+<div class="row">
+    <div class="col-12">
+
+<!-- Breadcrumb Bar: Pojok Kanan Atas Mandiri -->
+<div class="content-breadcrumb-bar">
+    <div class="breadcrumb-nav" id="pageBreadcrumb">
+        <span class="breadcrumb-current">Daftar Donasi</span>
+        <span class="breadcrumb-separator">/</span>
+    </div>
+</div>
+
+<!-- Action Bar: Tombol di bawah Breadcrumb -->
+<div class="content-action-bar">
+    <button type="button" class="btn btn-outline-success btn-sm rounded-3 fw-semibold shadow-sm" id="btnExportCsv" onclick="exportDonationsCsv()">
+        <i class="fas fa-file-csv me-1"></i> Unduh Laporan (CSV)
+    </button>
+</div>
+
+<!-- 3 KPI Mini Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card-box">
+            <div class="stat-header">
+                <span class="stat-label-text">Total Donasi Berhasil</span>
+                <div class="stat-icon-wrapper stat-icon-teal"><i class="fas fa-circle-check"></i></div>
+            </div>
+            <div>
+                <div class="stat-number-value" id="kpiPaidTotal">Rp 0</div>
+                <div class="stat-subtext text-muted small"><span id="kpiPaidCount">0</span> transaksi terverifikasi</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card-box">
+            <div class="stat-header">
+                <span class="stat-label-text">Menunggu Pembayaran</span>
+                <div class="stat-icon-wrapper stat-icon-amber"><i class="fas fa-clock"></i></div>
+            </div>
+            <div>
+                <div class="stat-number-value" id="kpiPendingTotal">Rp 0</div>
+                <div class="stat-subtext text-muted small"><span id="kpiPendingCount">0</span> transaksi pending</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card-box">
+            <div class="stat-header">
+                <span class="stat-label-text">Rata-rata Nominal</span>
+                <div class="stat-icon-wrapper stat-icon-purple"><i class="fas fa-scale-balanced"></i></div>
+            </div>
+            <div>
+                <div class="stat-number-value" id="kpiAverage">Rp 0</div>
+                <div class="stat-subtext text-muted small">Per donatur berkontribusi</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="admin-card">
+    <div class="table-responsive p-3">
+        <table class="table table-hover align-middle w-100" id="tableDonations">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 50px; text-align:center;">NO</th>
+                    <th>Invoice</th>
+                    <th>Donatur</th>
+                    <th>Campaign</th>
+                    <th>Jumlah</th>
+                    <th>Tip</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Waktu</th>
+                    <th style="width: 50px; text-align:center;">Doa</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Doa & Pesan Donatur -->
+<div class="modal fade" id="modalPrayer" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold"><i class="fas fa-heart text-danger me-2"></i>Doa & Dukungan Donatur</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-2">
+                    <span class="text-muted small">Dari:</span>
+                    <strong class="d-block text-dark" id="modalDonorName">-</strong>
+                </div>
+                <div class="mb-3">
+                    <span class="text-muted small">Untuk Campaign:</span>
+                    <strong class="d-block text-teal" id="modalCampaignName">-</strong>
+                </div>
+                <div class="p-3 bg-light rounded-3 border fst-italic text-secondary" id="modalPrayerContent">
+                    "-"
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 pt-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    var rawDonationsCache = [];
+    var donationsDataTable = null;
+
+    function renderDonationsTable(data) {
+        if ($.fn.DataTable.isDataTable('#tableDonations')) {
+            $('#tableDonations').DataTable().destroy();
+        }
+
+        donationsDataTable = $('#tableDonations').DataTable({
+            data: data,
+            columns: [
+                {
+                    data: null,
+                    orderable: false,
+                    className: "text-muted",
+                    render: function (data, type, row, meta) {
+                        return meta.row + 1;
+                    }
+                },
+                {
+                    data: 'invoiceNumber',
+                    render: function (data) {
+                        return `<span class="font-monospace small" style="color:#475569;">${escHtml(data || '-')}</span>`;
+                    }
+                },
+                {
+                    data: 'donorName',
+                    render: function (data, type, row) {
+                        var name = row.isAnonymous ? 'Hamba Allah' : (data || '-');
+                        return `<span class="fw-semibold text-dark">${escHtml(name)}</span>`;
+                    }
+                },
+                {
+                    data: 'campaignTitle',
+                    render: function (data) {
+                        return `<div class="text-truncate donations-campaign-cell" title="${escHtml(data || '-')}">${escHtml(data || '-')}</div>`;
+                    }
+                },
+                {
+                    data: 'amount',
+                    render: function (data) {
+                        return 'Rp ' + (data || 0).toLocaleString('id-ID');
+                    }
+                },
+                {
+                    data: 'platformTip',
+                    render: function (data) {
+                        return `<span class="text-muted small">Rp ${(data || 0).toLocaleString('id-ID')}</span>`;
+                    }
+                },
+                {
+                    data: 'totalAmount',
+                    render: function (data) {
+                        return `<strong style="color:#0f766e;">Rp ${(data || 0).toLocaleString('id-ID')}</strong>`;
+                    }
+                },
+                {
+                    data: 'paymentStatus',
+                    render: function (data, type, row) {
+                        var pStatus = (data || row.status || 'pending').toUpperCase();
+                        if (pStatus === 'PAID' || pStatus === 'SETTLED' || pStatus === 'SUCCESS') {
+                            return '<span class="status-pill pill-active"><span class="dot-indicator"></span>' + pStatus + '</span>';
+                        } else if (pStatus === 'PENDING') {
+                            return '<span class="status-pill pill-pending"><span class="dot-indicator"></span>PENDING</span>';
+                        }
+                        return '<span class="status-pill pill-inactive"><span class="dot-indicator"></span>' + (pStatus || 'FAILED') + '</span>';
+                    }
+                },
+                {
+                    data: 'createdAt',
+                    render: function (data) {
+                        return data ? `<span class="text-muted small">${new Date(data).toLocaleDateString('id-ID', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}</span>` : '-';
+                    }
+                },
+                {
+                    data: 'prayerMessage',
+                    orderable: false,
+                    className: "text-center",
+                    render: function (data, type, row) {
+                        if (!data) return '<span class="text-muted small">-</span>';
+                        var donorName = row.isAnonymous ? 'Hamba Allah' : (row.donorName || '-');
+                        var rowJson = encodeURIComponent(JSON.stringify({
+                            name: donorName,
+                            campaign: row.campaignTitle || '-',
+                            prayer: data
+                        }));
+                        return `<button type="button" class="btn btn-sm btn-outline-teal rounded-circle donations-prayer-btn" onclick="openPrayerModal('${rowJson}')" title="Lihat Doa"><i class="fas fa-envelope-open-text" style="color:#0f766e;"></i></button>`;
+                    }
+                }
+            ]
+        });
+    }
+
+    function initDonationsData() {
+        var configuredFid = window.CONFIGURED_FOUNDATION_ID || 0;
+        if (configuredFid > 0) {
+            loadDonations(configuredFid);
+            return;
+        }
+
+        var currentUser = AuthSession.getUser() || {};
+        var currentUserId = currentUser.id || currentUser.Id || 0;
+        var userFoundId = currentUser.foundationId || currentUser.FoundationId || 0;
+
+        if (userFoundId > 0) {
+            loadDonations(userFoundId);
+            return;
+        }
+
+        $.ajax({
+            url: API_BASE_URL + '/foundations',
+            type: 'GET',
+            dataType: 'json',
+            success: function (founds) {
+                var list = Array.isArray(founds) ? founds : (founds.data || []);
+                var myFound = (list || []).find(function (f) {
+                    if (f.userId === currentUserId || (f.user && f.user.id === currentUserId)) return true;
+                    if (Array.isArray(f.foundationUsers) && f.foundationUsers.some(function(fu) { return fu.userId === currentUserId; })) return true;
+                    if (Array.isArray(f.userIds) && f.userIds.indexOf(currentUserId) !== -1) return true;
+                    return false;
+                });
+                if (myFound) {
+                    loadDonations(myFound.id);
+                } else {
+                    renderDonationsTable([]);
+                    AdminToast.warning('Akun Anda belum ditautkan ke organisasi/lembaga manapun.');
+                }
+            },
+            error: function () {
+                AdminToast.error('Gagal memuat profil yayasan');
+                renderDonationsTable([]);
+            }
+        });
+    }
+
+    function loadDonations(foundationId) {
+        $.ajax({
+            url: API_BASE_URL + '/campaigns/foundation/' + foundationId,
+            type: 'GET',
+            dataType: 'json',
+            success: function (campaigns) {
+                if (!campaigns || campaigns.length === 0) {
+                    renderDonationsTable([]);
+                    return;
+                }
+
+                var allDonations = [];
+                var reqs = campaigns.map(function (c) {
+                    return $.ajax({
+                        url: API_BASE_URL + '/donations/campaign/' + c.id,
+                        type: 'GET',
+                        dataType: 'json'
+                    }).then(function (dons) {
+                        (dons || []).forEach(function (d) { d.campaignTitle = c.title; });
+                        allDonations = allDonations.concat(dons || []);
+                    });
+                });
+
+                $.when.apply($, reqs).always(function () {
+                    allDonations.sort(function (a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
+                    rawDonationsCache = allDonations;
+
+                    // Hitung Statistik KPI
+                    var paidList = allDonations.filter(function (d) {
+                        var st = (d.paymentStatus || d.status || '').toLowerCase();
+                        return st === 'paid' || st === 'settled' || st === 'success' || st === 'berhasil';
+                    });
+                    var pendingList = allDonations.filter(function (d) {
+                        return (d.paymentStatus || d.status || '').toLowerCase() === 'pending';
+                    });
+                    var paidTotal = paidList.reduce(function (sum, d) { return sum + (d.amount || 0); }, 0);
+                    var pendingTotal = pendingList.reduce(function (sum, d) { return sum + (d.amount || 0); }, 0);
+                    var avg = paidList.length > 0 ? Math.round(paidTotal / paidList.length) : 0;
+
+                    $('#kpiPaidTotal').text('Rp ' + paidTotal.toLocaleString('id-ID'));
+                    $('#kpiPaidCount').text(paidList.length);
+                    $('#kpiPendingTotal').text('Rp ' + pendingTotal.toLocaleString('id-ID'));
+                    $('#kpiPendingCount').text(pendingList.length);
+                    $('#kpiAverage').text('Rp ' + avg.toLocaleString('id-ID'));
+
+                    renderDonationsTable(allDonations);
+                });
+            },
+            error: function () {
+                AdminToast.error('Gagal mengambil daftar donasi');
+                renderDonationsTable([]);
+            }
+        });
+    }
+
+    window.openPrayerModal = function (encodedJson) {
+        var obj = JSON.parse(decodeURIComponent(encodedJson));
+        $('#modalDonorName').text(obj.name);
+        $('#modalCampaignName').text(obj.campaign);
+        $('#modalPrayerContent').text('"' + obj.prayer + '"');
+        $('#modalPrayer').modal('show');
+    };
+
+    window.exportDonationsCsv = function () {
+        if (!rawDonationsCache || rawDonationsCache.length === 0) {
+            AdminToast.warning('Tidak ada data donasi untuk diunduh.');
+            return;
+        }
+
+        var csv = 'No,Invoice,Donatur,Campaign,Nominal,Tip Platform,Total,Status,Waktu,Pesan Doa\n';
+        rawDonationsCache.forEach(function (d, i) {
+            var donor = (d.isAnonymous ? 'Hamba Allah' : (d.donorName || '-')).replace(/,/g, ' ');
+            var camp = (d.campaignTitle || '-').replace(/,/g, ' ');
+            var prayer = (d.prayerMessage || '-').replace(/[\r\n,]/g, ' ');
+            var date = d.createdAt ? new Date(d.createdAt).toISOString() : '-';
+            var st = (d.paymentStatus || d.status || 'pending').toUpperCase();
+
+            csv += `${i+1},"${d.invoiceNumber}","${donor}","${camp}",${d.amount || 0},${d.platformTip || 0},${d.totalAmount || 0},"${st}","${date}","${prayer}"\n`;
+        });
+
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var url = URL.createObjectURL(blob);
+        var $link = $('<a>')
+            .attr('href', url)
+            .attr('download', 'Laporan_Donasi_Yayasan_' + new Date().toISOString().slice(0, 10) + '.csv')
+            .appendTo('body');
+        $link[0].click();
+        $link.remove();
+    };
+
+    $(document).ready(function () {
+        initDonationsData();
+    });
+</script>
+}

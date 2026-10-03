@@ -1,0 +1,113 @@
+@{
+    Layout = "_PublicLayout";
+    var slug = (ViewData["Slug"] as string) ?? "";
+    var domain = (ViewData["Domain"] as string) ?? "";
+    var tenant = (ViewData["Tenant"] as string) ?? (!string.IsNullOrEmpty(slug) ? slug : domain);
+    var foundationName = (ViewData["FoundationName"] as string) ?? "Yayasan";
+    ViewData["Title"] = $"Untaian Doa Donatur - {foundationName}";
+    var brandHref = $"/{tenant}";
+}
+
+<style>
+    /* Hero Header */
+    .prayers-hero {
+        background: linear-gradient(135deg, #0f766e 0%, #115e59 50%, #042f2e 100%);
+        color: #ffffff;
+        padding: 4.5rem 0 3.5rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    .prayers-hero::before {
+        content: '';
+        position: absolute;
+        top: -40%;
+        right: -15%;
+        width: 500px;
+        height: 500px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(45,212,191,0.18) 0%, rgba(255,255,255,0) 70%);
+        pointer-events: none;
+    }
+
+    .badge-verified-hero {
+        background: rgba(45, 212, 191, 0.15);
+        color: #2dd4bf;
+        border: 1px solid rgba(45, 212, 191, 0.35);
+        border-radius: 50rem;
+        padding: 0.35rem 1rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .placeholder-card {
+        background: #ffffff;
+        border-radius: 1.25rem;
+        border: 1px solid #e2e8f0;
+        padding: 3.5rem 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
+        max-width: 680px;
+        margin: -2.5rem auto 3rem auto;
+        position: relative;
+        z-index: 10;
+        text-align: center;
+    }
+
+    .placeholder-icon-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: #f0fdfa;
+        color: #0d9488;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+        border: 1px solid #ccfbf1;
+    }
+</style>
+
+<!-- Hero Section -->
+<section class="prayers-hero">
+    <div class="container position-relative" style="z-index: 2;">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="badge-verified-hero mb-3">
+                    <i class="fas fa-hands-praying text-teal" style="color: #2dd4bf;"></i> Komunitas Orang Baik
+                </div>
+                <h1 class="fw-bold mb-2 fs-2 text-white">Untaian Doa Donatur</h1>
+                <p class="text-white-50 mb-0 fs-6">
+                    Doa dan harapan tulus dari para donatur untuk sesama melalui @foundationName.
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                <span class="badge bg-white bg-opacity-10 text-white border border-white border-opacity-25 px-3 py-2 rounded-pill small">
+                    <i class="fas fa-heart text-danger me-1"></i> Ruang Doa Bersama
+                </span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Content Section: Halaman Placeholder / Kosong -->
+<div class="container">
+    <div class="placeholder-card">
+        <div class="placeholder-icon-circle">
+            <i class="fas fa-hands-praying fa-2x"></i>
+        </div>
+        <h4 class="fw-bold text-dark mb-2">Halaman Untaian Doa</h4>
+        <p class="text-muted small mb-4 mx-auto" style="max-width: 480px; line-height: 1.7;">
+            Halaman khusus untaian doa dan dukungan kebaikan ini sedang disiapkan. Seluruh untaian doa dari para donatur saat ini dapat Anda baca secara lengkap pada halaman utama Beranda.
+        </p>
+        <div class="d-flex flex-wrap justify-content-center gap-2">
+            <a href="/" class="btn btn-brand rounded-pill px-4 py-2 fw-semibold text-white shadow-sm">
+                <i class="fas fa-house me-1"></i> Buka Beranda Utama
+            </a>
+            <a href="/Campaigns" class="btn btn-outline-teal rounded-pill px-4 py-2 fw-semibold" style="border: 1.5px solid var(--brand-teal); color: var(--brand-teal);">
+                <i class="fas fa-heart me-1"></i> Lihat Program Donasi
+            </a>
+        </div>
+    </div>
+</div>

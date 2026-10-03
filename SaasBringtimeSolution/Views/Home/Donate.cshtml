@@ -1,0 +1,308 @@
+@{
+    Layout = "_PublicLayout";
+    ViewData["Title"] = "Mulai Donasi";
+    var slug = ViewData["Slug"] as string;
+}
+
+<style>
+    .preset-amount-btn {
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        color: #475569;
+        font-weight: 600;
+        font-size: 14px;
+        padding: 10px 8px;
+        border-radius: 10px;
+        transition: all 0.2s ease;
+    }
+    .preset-amount-btn:hover, .preset-amount-btn.active {
+        border-color: var(--brand-teal);
+        background: #f0fdfa;
+        color: var(--brand-teal-dark);
+    }
+    .tip-btn {
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        color: #475569;
+        font-weight: 600;
+        font-size: 13px;
+        padding: 8px 4px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+    .tip-btn:hover, .tip-btn.active {
+        border-color: var(--brand-teal);
+        background: #f0fdfa;
+        color: var(--brand-teal-dark);
+    }
+    .payment-method-card {
+        transition: all 0.2s ease;
+    }
+    .payment-method-card:hover {
+        border-color: var(--brand-teal) !important;
+    }
+</style>
+
+<div class="row">
+    <div class="col-12 px-0">
+        <div class="container py-4 pb-5">
+            <div class="row">
+                <div class="col-md-8 mx-auto col-lg-6">
+                    <div id="loading" class="text-center py-5">
+                        <div class="spinner-border text-teal" role="status"></div>
+                    </div>
+                    
+                    <div id="formContent" style="display: none;">
+                        <!-- Header Campaign -->
+                        <div class="bg-white rounded-4 shadow-sm p-3 mb-4 d-flex align-items-center gap-3">
+                            <img id="cBanner" src="" alt="" class="rounded-3" style="width: 80px; height: 60px; object-fit: cover;">
+                            <div>
+                                <small class="text-muted d-block mb-1">Anda akan berdonasi untuk:</small>
+                                <h6 id="cTitle" class="fw-bold mb-0 text-dark lh-sm" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">Judul</h6>
+                            </div>
+                        </div>
+                        
+                        <form id="donateForm" onsubmit="event.preventDefault(); submitDonation();">
+                            <!-- Nominal Donasi -->
+                            <div class="bg-white rounded-4 shadow-sm p-4 mb-4">
+                                <h5 class="fw-bold mb-3">Nominal Donasi</h5>
+                                <div class="input-group mb-3">
+                                    <span class="input-group-text bg-light border-end-0 fw-bold">Rp</span>
+                                    <input type="number" class="form-control form-control-lg border-start-0 ps-0 fw-bold fs-4" id="inputAmount" placeholder="0" required min="10000" step="1000" oninput="handleAmountInput(this)">
+                                </div>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-4"><button type="button" class="preset-amount-btn w-100" onclick="selectPresetAmount(this, 10000)">10Rb</button></div>
+                                    <div class="col-4"><button type="button" class="preset-amount-btn w-100" onclick="selectPresetAmount(this, 25000)">25Rb</button></div>
+                                    <div class="col-4"><button type="button" class="preset-amount-btn w-100" onclick="selectPresetAmount(this, 50000)">50Rb</button></div>
+                                    <div class="col-4"><button type="button" class="preset-amount-btn w-100" onclick="selectPresetAmount(this, 100000)">100Rb</button></div>
+                                    <div class="col-4"><button type="button" class="preset-amount-btn w-100" onclick="selectPresetAmount(this, 500000)">500Rb</button></div>
+                                    <div class="col-4"><button type="button" class="preset-amount-btn w-100" onclick="selectPresetAmount(this, 1000000)">1 Jt</button></div>
+                                </div>
+                                <small class="text-muted"><i class="fas fa-info-circle me-1"></i> Minimal donasi Rp 10.000</small>
+                            </div>
+
+                            <!-- Platform Tip -->
+                            <div class="bg-white rounded-4 shadow-sm p-4 mb-4">
+                                <h5 class="fw-bold mb-2">Dukungan Platform</h5>
+                                <p class="text-muted small mb-3">Pilih nominal tip untuk mendukung operasional platform kami. (Opsional)</p>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-3"><button type="button" class="tip-btn w-100 active" onclick="selectTipAmount(this, 0)">Rp0</button></div>
+                                    <div class="col-3"><button type="button" class="tip-btn w-100" onclick="selectTipAmount(this, 2000)">Rp2k</button></div>
+                                    <div class="col-3"><button type="button" class="tip-btn w-100" onclick="selectTipAmount(this, 5000)">Rp5k</button></div>
+                                    <div class="col-3"><button type="button" class="tip-btn w-100" onclick="selectTipAmount(this, 10000)">Rp10k</button></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Profil Donatur -->
+                            <div class="bg-white rounded-4 shadow-sm p-4 mb-4">
+                                <h5 class="fw-bold mb-3">Profil Donatur</h5>
+                                
+                                <div id="loginPrompt" class="alert alert-info py-2 small mb-3 border-0 bg-light" style="display: none;">
+                                    <i class="fas fa-user-circle me-1"></i> Sudah punya akun? <a href="/Auth/Login" class="fw-bold text-teal text-decoration-none" style="color: var(--brand-teal);">Masuk</a> untuk mempercepat proses.
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold text-muted">Nama Lengkap</label>
+                                    <input type="text" class="form-control form-control-custom" id="donorName" required placeholder="Nama Anda">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold text-muted">Email (Opsional)</label>
+                                    <input type="email" class="form-control form-control-custom" id="donorEmail" placeholder="email@contoh.com">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold text-muted">No. WhatsApp (Opsional)</label>
+                                    <input type="text" class="form-control form-control-custom" id="donorPhone" placeholder="08xxxxxxxxxx">
+                                </div>
+                                
+                                <div class="form-check form-switch mt-4">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="isAnonymous">
+                                    <label class="form-check-label fw-semibold" for="isAnonymous">Sembunyikan nama saya (Anonim)</label>
+                                    <small class="d-block text-muted">Nama Anda akan tampil sebagai "Hamba Allah".</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Metode Pembayaran -->
+                            <div class="bg-white rounded-4 shadow-sm p-4 mb-4">
+                                <h5 class="fw-bold mb-3">Metode Pembayaran</h5>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <label class="payment-method-card d-flex align-items-center gap-2 p-3 border rounded-3 cursor-pointer w-100 h-100" style="cursor:pointer; background:#f8fafc;">
+                                            <input type="radio" name="paymentChannel" value="QRIS" checked class="form-check-input mt-0">
+                                            <div>
+                                                <div class="fw-bold small"><i class="fas fa-qrcode text-teal me-1"></i> QRIS</div>
+                                                <div class="text-muted" style="font-size:10px;">GoPay, OVO, Dana, Shopee, BCA</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="payment-method-card d-flex align-items-center gap-2 p-3 border rounded-3 cursor-pointer w-100 h-100" style="cursor:pointer; background:#f8fafc;">
+                                            <input type="radio" name="paymentChannel" value="BCA_VA" class="form-check-input mt-0">
+                                            <div>
+                                                <div class="fw-bold small"><i class="fas fa-building-columns text-primary me-1"></i> BCA Virtual Account</div>
+                                                <div class="text-muted" style="font-size:10px;">Verifikasi Otomatis 24 Jam</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="payment-method-card d-flex align-items-center gap-2 p-3 border rounded-3 cursor-pointer w-100 h-100" style="cursor:pointer; background:#f8fafc;">
+                                            <input type="radio" name="paymentChannel" value="MANDIRI_VA" class="form-check-input mt-0">
+                                            <div>
+                                                <div class="fw-bold small"><i class="fas fa-building-columns text-warning me-1"></i> Mandiri VA</div>
+                                                <div class="text-muted" style="font-size:10px;">Verifikasi Otomatis 24 Jam</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="payment-method-card d-flex align-items-center gap-2 p-3 border rounded-3 cursor-pointer w-100 h-100" style="cursor:pointer; background:#f8fafc;">
+                                            <input type="radio" name="paymentChannel" value="BNI_VA" class="form-check-input mt-0">
+                                            <div>
+                                                <div class="fw-bold small"><i class="fas fa-building-columns text-info me-1"></i> BNI Virtual Account</div>
+                                                <div class="text-muted" style="font-size:10px;">Verifikasi Otomatis 24 Jam</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pesan Doa -->
+                            <div class="bg-white rounded-4 shadow-sm p-4 mb-4">
+                                <h5 class="fw-bold mb-3">Sertakan Doa & Dukungan (Opsional)</h5>
+                                <textarea class="form-control form-control-custom" id="prayerMessage" rows="3" placeholder="Tuliskan doa atau pesan dukungan tulus untuk penerima manfaat..."></textarea>
+                            </div>
+                            
+                            <!-- Ringkasan & Submit -->
+                            <div class="bg-white rounded-4 shadow-sm p-4 sticky-bottom border-top">
+                                <div class="d-flex justify-content-between mb-2 small">
+                                    <span class="text-muted">Nominal Donasi</span>
+                                    <span id="summaryAmount" class="fw-semibold">Rp 0</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-3 small pb-3 border-bottom">
+                                    <span class="text-muted">Dukungan Platform</span>
+                                    <span id="summaryTip" class="fw-semibold">Rp 0</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-4">
+                                    <span class="fw-bold text-dark fs-5">Total Bayar</span>
+                                    <span id="summaryTotal" class="fw-bold text-teal fs-5" style="color: var(--brand-teal-dark);">Rp 0</span>
+                                </div>
+                                
+                                <div id="errorAlert" class="alert alert-danger" style="display:none;"></div>
+                                
+                                <button type="submit" id="btnSubmit" class="btn btn-primary-custom btn-lg w-100 shadow-sm">
+                                    Lanjutkan Pembayaran
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var currentSlug = '@slug';
+        var campaignId = 0;
+        var selectedAmount = 0;
+        var selectedTip = 0;
+        var currentUser = AuthSession.getUser();
+        
+        function selectPresetAmount(btn, amount) {
+            $('.preset-amount-btn').removeClass('active');
+            $(btn).addClass('active');
+            selectedAmount = parseInt(amount) || 0;
+            $('#inputAmount').val(selectedAmount);
+            updateSummary();
+        }
+
+        function handleAmountInput(input) {
+            $('.preset-amount-btn').removeClass('active');
+            var val = parseInt($(input).val());
+            selectedAmount = isNaN(val) ? 0 : val;
+            updateSummary();
+        }
+
+        function selectTipAmount(btn, tip) {
+            $('.tip-btn').removeClass('active');
+            $(btn).addClass('active');
+            selectedTip = parseInt(tip) || 0;
+            updateSummary();
+        }
+
+        function updateSummary() {
+            $('#summaryAmount').text(formatRupiah(selectedAmount));
+            $('#summaryTip').text(formatRupiah(selectedTip));
+            $('#summaryTotal').text(formatRupiah(selectedAmount + selectedTip));
+        }
+
+        function submitDonation() {
+            $('#errorAlert').hide();
+            
+            if (selectedAmount < 10000) {
+                $('#errorAlert').text('Minimal donasi Rp 10.000').show();
+                return;
+            }
+            
+            var data = {
+                campaignId: campaignId,
+                userId: currentUser ? currentUser.id : null,
+                donorName: $('#donorName').val(),
+                donorEmail: $('#donorEmail').val(),
+                donorPhone: $('#donorPhone').val(),
+                isAnonymous: $('#isAnonymous').is(':checked'),
+                amount: selectedAmount,
+                platformTip: selectedTip,
+                prayerMessage: $('#prayerMessage').val()
+            };
+            
+            var $btn = $('#btnSubmit');
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Memproses...');
+            
+            $.ajax({
+                url: API_BASE_URL + '/donations',
+                type: 'POST',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function(res) {
+                    window.location.href = '/PaymentStatus/' + encodeURIComponent(res.invoiceNumber);
+                },
+                error: function(xhr) {
+                    var msg = 'Terjadi kesalahan sistem.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    }
+                    $('#errorAlert').text(msg).show();
+                    $btn.prop('disabled', false).html('Lanjutkan Pembayaran');
+                }
+            });
+        }
+
+        $(function() {
+            // Load Campaign
+            $.ajax({
+                url: API_BASE_URL + '/campaigns/slug/' + currentSlug,
+                type: 'GET',
+                dataType: 'json',
+                success: function(c) {
+                    $('#loading').hide();
+                    $('#formContent').show();
+                    
+                    campaignId = c.id;
+                    $('#cBanner').attr('src', c.bannerUrl || 'https://via.placeholder.com/80x60?text=C');
+                    $('#cTitle').text(c.title);
+                    
+                    if (currentUser) {
+                        $('#donorName').val(currentUser.name || currentUser.namaLengkap || '');
+                        $('#donorEmail').val(currentUser.email || '');
+                    } else {
+                        $('#loginPrompt').show();
+                    }
+                },
+                error: function() {
+                    $('#loading').html('<div class="alert alert-danger">Campaign tidak ditemukan.</div>');
+                }
+            });
+        });
+    </script>
+}

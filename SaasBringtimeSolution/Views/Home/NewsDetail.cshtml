@@ -1,0 +1,264 @@
+@{
+    Layout = "_PublicLayout";
+    var slug = (ViewData["Slug"] as string) ?? "";
+    var domain = (ViewData["Domain"] as string) ?? "";
+    var tenant = (ViewData["Tenant"] as string) ?? (!string.IsNullOrEmpty(slug) ? slug : domain);
+    var foundationName = (ViewData["FoundationName"] as string) ?? "Yayasan";
+    ViewData["Title"] = "Detail Kabar & Berita";
+}
+
+<style>
+    .news-detail-header {
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 2.5rem 0 2rem 0;
+    }
+    .news-article-banner {
+        width: 100%;
+        max-height: 480px;
+        object-fit: cover;
+        border-radius: 1.25rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .news-article-content {
+        font-size: 1.05rem;
+        line-height: 1.8;
+        color: #334155;
+    }
+    .news-article-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.75rem;
+        margin: 1.5rem 0;
+    }
+    .news-article-content p {
+        margin-bottom: 1.25rem;
+    }
+    .news-sidebar-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 1rem;
+        padding: 1.5rem;
+    }
+    .category-badge-lg {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 0.85rem;
+        border-radius: 50rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        background: #e6fffa;
+        color: #0f766e;
+        border: 1px solid rgba(15, 118, 110, 0.2);
+    }
+</style>
+
+<!-- Header & Breadcrumb -->
+<header class="news-detail-header">
+    <div class="container">
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-teal" style="color: #0f766e;"><i class="fas fa-home me-1"></i>Beranda</a></li>
+                <li class="breadcrumb-item"><a href="/News" class="text-decoration-none text-teal" style="color: #0f766e;">Kabar & Berita</a></li>
+                <li class="breadcrumb-item active text-truncate" id="breadcrumbTitle" aria-current="page" style="max-width: 300px;">Detail</li>
+            </ol>
+        </nav>
+        
+        <div id="headerMeta" style="display: none;">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="category-badge-lg" id="postCategory">Berita</span>
+                <span class="text-muted small"><i class="far fa-calendar-alt me-1"></i><span id="postDate">-</span></span>
+                <span class="text-muted small ms-2"><i class="far fa-eye me-1"></i><span id="postViews">0</span> dibaca</span>
+            </div>
+            <h1 class="fw-bold text-dark fs-2 mb-0" id="postTitle">Judul Berita</h1>
+        </div>
+    </div>
+</header>
+
+<!-- Loading State -->
+<div id="loadingDetail" class="text-center py-5">
+    <div class="spinner-border text-teal" role="status" style="color: #0f766e;"></div>
+    <p class="text-muted mt-2 small">Memuat artikel...</p>
+</div>
+
+<!-- Error / Not Found State -->
+<div id="errorDetail" class="container py-5 text-center" style="display: none;">
+    <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+        <i class="fas fa-exclamation-circle fa-2x text-warning"></i>
+    </div>
+    <h4 class="fw-bold text-dark">Artikel Tidak Ditemukan</h4>
+    <p class="text-muted small">Artikel atau berita yang Anda cari tidak tersedia atau telah dihapus.</p>
+    <a href="/News" class="btn btn-teal rounded-pill px-4 text-white" style="background: #0f766e;">Kembali ke Kabar & Berita</a>
+</div>
+
+<!-- Main Content Area -->
+<section class="py-5" id="mainArticleSection" style="display: none;">
+    <div class="container">
+        <div class="row g-4">
+            <!-- Article Body -->
+            <div class="col-lg-8">
+                <!-- Thumbnail -->
+                <div class="mb-4 text-center" id="bannerContainer" style="display: none;">
+                    <img id="postThumbnail" src="" alt="Thumbnail" class="news-article-banner">
+                </div>
+
+                <!-- Excerpt Quote (if any) -->
+                <div id="postExcerptContainer" class="p-3 bg-light rounded-3 border-start border-4 border-teal mb-4 fst-italic text-secondary" style="display: none; border-color: #0f766e !important;">
+                    <span id="postExcerpt"></span>
+                </div>
+
+                <!-- Content -->
+                <div class="news-article-content" id="postContent"></div>
+
+                <!-- Share & Back -->
+                <div class="d-flex flex-wrap align-items-center justify-content-between pt-4 mt-5 border-top gap-2">
+                    <a href="/News" class="btn btn-outline-secondary rounded-pill px-4">
+                        <i class="fas fa-arrow-left me-2"></i>Semua Berita
+                    </a>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="small text-muted fw-semibold me-1">Bagikan:</span>
+                        <a href="#" id="shareWa" target="_blank" class="btn btn-sm btn-outline-success rounded-circle" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;" title="WhatsApp">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                        <a href="#" id="shareFb" target="_blank" class="btn btn-sm btn-outline-primary rounded-circle" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;" title="Facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle" style="width: 36px; height: 36px;" onclick="navigator.clipboard.writeText(window.location.href); alert('Tautan berhasil disalin!');" title="Salin Tautan">
+                            <i class="fas fa-link"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <div class="news-sidebar-card shadow-sm mb-4">
+                    <h5 class="fw-bold text-dark mb-3">Tentang Lembaga</h5>
+                    <p class="small text-muted mb-4">
+                        @foundationName merupakan lembaga nirlaba yang berdedikasi menyalurkan amanah donasi, zakat, infaq, dan sedekah secara transparan.
+                    </p>
+                    <a href="/Campaigns" class="btn text-white w-100 rounded-pill fw-semibold py-2" style="background: #0f766e;">
+                        <i class="fas fa-hand-holding-heart me-2"></i>Salurkan Donasi
+                    </a>
+                </div>
+
+                <div class="news-sidebar-card shadow-sm">
+                    <h6 class="fw-bold text-dark mb-3">Kategori Berita</h6>
+                    <div class="d-flex flex-column gap-2">
+                        <a href="/News?cat=BERITA" class="text-decoration-none text-secondary small d-flex justify-content-between align-items-center py-1 border-bottom">
+                            <span><i class="fas fa-folder-open me-2 text-muted"></i>Kabar Berita</span>
+                            <i class="fas fa-chevron-right text-muted" style="font-size: 10px;"></i>
+                        </a>
+                        <a href="/News?cat=PENYALURAN" class="text-decoration-none text-secondary small d-flex justify-content-between align-items-center py-1 border-bottom">
+                            <span><i class="fas fa-folder-open me-2 text-muted"></i>Laporan Penyaluran</span>
+                            <i class="fas fa-chevron-right text-muted" style="font-size: 10px;"></i>
+                        </a>
+                        <a href="/News?cat=INSPIRASI" class="text-decoration-none text-secondary small d-flex justify-content-between align-items-center py-1">
+                            <span><i class="fas fa-folder-open me-2 text-muted"></i>Kisah Inspiratif</span>
+                            <i class="fas fa-chevron-right text-muted" style="font-size: 10px;"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+<script>
+    var slugOrId = '@slug';
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '-';
+        try {
+            var d = new Date(dateStr);
+            return d.toLocaleDateString('id-ID', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+        } catch(e) {
+            return dateStr;
+        }
+    }
+
+    $(document).ready(function() {
+        if (!slugOrId) {
+            $('#loadingDetail').hide();
+            $('#errorDetail').show();
+            return;
+        }
+
+        // Try load by slug first, fallback to numeric id or foundation list
+        var apiUrl = API_BASE_URL + '/newsposts/slug/' + encodeURIComponent(slugOrId);
+        
+        $.ajax({
+            url: apiUrl,
+            type: 'GET',
+            dataType: 'json',
+            success: function(post) {
+                renderPost(post);
+            },
+            error: function() {
+                // If slug not found directly, try by id if slugOrId is numeric
+                if (!isNaN(slugOrId)) {
+                    $.ajax({
+                        url: API_BASE_URL + '/newsposts/' + slugOrId,
+                        type: 'GET',
+                        dataType: 'json',
+                        success: function(post) {
+                            renderPost(post);
+                        },
+                        error: function() {
+                            $('#loadingDetail').hide();
+                            $('#errorDetail').show();
+                        }
+                    });
+                } else {
+                    $('#loadingDetail').hide();
+                    $('#errorDetail').show();
+                }
+            }
+        });
+
+        function renderPost(post) {
+            if (!post) {
+                $('#loadingDetail').hide();
+                $('#errorDetail').show();
+                return;
+            }
+
+            document.title = (post.title || 'Detail Berita') + ' - @foundationName';
+            $('#breadcrumbTitle').text(post.title || 'Detail');
+            $('#postTitle').text(post.title || '');
+            $('#postCategory').text((post.category || 'Berita').replace('_', ' ').toUpperCase());
+            $('#postDate').text(formatDate(post.publishedAt || post.createdAt));
+            $('#postViews').text(post.views || post.viewCount || 0);
+
+            if (post.thumbnailUrl) {
+                $('#postThumbnail').attr('src', post.thumbnailUrl);
+                $('#bannerContainer').show();
+            }
+
+            if (post.excerpt) {
+                $('#postExcerpt').text(post.excerpt);
+                $('#postExcerptContainer').show();
+            }
+
+            $('#postContent').html(post.content || '<p class="text-muted">Tidak ada konten.</p>');
+
+            // Share URLs
+            var curUrl = encodeURIComponent(window.location.href);
+            var titleEnc = encodeURIComponent(post.title || '');
+            $('#shareWa').attr('href', 'https://api.whatsapp.com/send?text=' + titleEnc + '%20' + curUrl);
+            $('#shareFb').attr('href', 'https://www.facebook.com/sharer/sharer.php?u=' + curUrl);
+
+            $('#loadingDetail').hide();
+            $('#headerMeta').show();
+            $('#mainArticleSection').show();
+        }
+    });
+</script>
+}

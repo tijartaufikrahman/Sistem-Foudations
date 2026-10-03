@@ -1,0 +1,843 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Kelola Grup Menu";
+}
+
+<style>
+    .icon-preview-box {
+        width: 38px;
+        height: 38px;
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        color: #0f766e;
+        flex-shrink: 0;
+    }
+    .submenus-add-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 12px 14px;
+        margin-bottom: 16px;
+    }
+</style>
+
+<!-- Outermost View Wrapper adhering to aturan_styling.txt -->
+<div class="row">
+    <div class="col-12">
+
+<!-- Breadcrumb Bar: Pojok Kanan Atas Mandiri (Tanpa Konten Sejajar) -->
+<div class="content-breadcrumb-bar">
+    <div class="breadcrumb-nav" id="pageBreadcrumb">
+        <span class="breadcrumb-current">Kelola Grup Menu</span>
+        <span class="breadcrumb-separator">/</span>
+    </div>
+</div>
+
+<!-- Action Bar: Tombol di bawah Breadcrumb -->
+<div class="content-action-bar">
+    <button type="button" class="btn-primary-admin" onclick="openCreateGroupModal()">
+        <i class="fas fa-plus"></i> Tambah Grup Baru
+    </button>
+</div>
+
+<div class="admin-card">
+    <div class="table-responsive p-3">
+        <table class="table table-hover align-middle w-100" id="tableGroups">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 50px; text-align:center;">NO</th>
+                    <th style="width: 50px; text-align:center;">IKON</th>
+                    <th>NAMA GRUP</th>
+                    <th>CATATAN</th>
+                    <th style="width: 140px; text-align:center;">SUB-MENU</th>
+                    <th style="width: 100px;">STATUS</th>
+                    <th style="text-align: right; width: 220px;">AKSI</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Tambah Grup -->
+<div class="admin-modal-backdrop" id="modalCreateGroup">
+    <div class="admin-modal-card" style="max-width: 500px;">
+        <div class="admin-modal-head">
+            <h4 class="admin-modal-title">Tambah Grup Menu</h4>
+            <button type="button" class="btn-modal-close" onclick="AdminModal.close('modalCreateGroup')">&times;</button>
+        </div>
+        <form id="formCreateGroup" onsubmit="event.preventDefault(); submitCreateGroup();">
+            <div class="admin-modal-content">
+                <div class="form-field-group">
+                    <label class="form-field-label">Nama Grup <span style="color:#ef4444;">*</span></label>
+                    <input type="text" id="cGroupName" class="form-field-input" placeholder="Contoh: Manajemen Pengguna" required />
+                </div>
+
+                <div class="form-field-group">
+                    <label class="form-field-label">FontAwesome Icon Class</label>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <span id="cGroupIconPreview" class="icon-preview-box">
+                            <i class="fas fa-folder"></i>
+                        </span>
+                        <input type="text" id="cGroupIcon" class="form-field-input" value="fas fa-folder" oninput="updateIconPreview('cGroupIcon', 'cGroupIconPreview')" />
+                        <button type="button" class="btn-secondary-admin" style="padding:0 12px; height:38px; white-space:nowrap; display:inline-flex; align-items:center; gap:6px;" onclick="openIconPicker('cGroupIcon', 'cGroupIconPreview')">
+                            <i class="fas fa-icons text-teal-600"></i> Pilih Ikon
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-field-group">
+                    <label class="form-field-label">Catatan</label>
+                    <textarea id="cGroupNote" class="form-field-input" rows="2" placeholder="Catatan grup menu (opsional)"></textarea>
+                </div>
+
+                <div class="form-field-group" style="margin-top:12px;">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.8rem; font-weight:600;">
+                        <input type="checkbox" id="cGroupActive" style="width:16px; height:16px;" checked />
+                        <span>Status Grup Aktif</span>
+                    </label>
+                </div>
+
+                <div class="form-field-group" style="margin-top:8px;">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.8rem; font-weight:600;">
+                        <input type="checkbox" id="cGroupDefaultOpen" style="width:16px; height:16px;" />
+                        <span>Buka dropdown grup ini secara default di sidebar navigasi</span>
+                    </label>
+                </div>
+            </div>
+            <div class="admin-modal-foot">
+                <button type="button" class="btn-secondary-admin" onclick="AdminModal.close('modalCreateGroup')">Batal</button>
+                <button type="submit" class="btn-primary-admin" id="btnSaveCreateGroup">Simpan Grup</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Edit Grup -->
+<div class="admin-modal-backdrop" id="modalEditGroup">
+    <div class="admin-modal-card" style="max-width: 500px;">
+        <div class="admin-modal-head">
+            <h4 class="admin-modal-title">Edit Grup Menu</h4>
+            <button type="button" class="btn-modal-close" onclick="AdminModal.close('modalEditGroup')">&times;</button>
+        </div>
+        <form id="formEditGroup" onsubmit="event.preventDefault(); submitEditGroup();">
+            <input type="hidden" id="editGroupId" />
+            <div class="admin-modal-content">
+                <div class="form-field-group">
+                    <label class="form-field-label">Nama Grup <span style="color:#ef4444;">*</span></label>
+                    <input type="text" id="eGroupName" class="form-field-input" required />
+                </div>
+
+                <div class="form-field-group">
+                    <label class="form-field-label">FontAwesome Icon Class</label>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <span id="eGroupIconPreview" class="icon-preview-box">
+                            <i class="fas fa-folder"></i>
+                        </span>
+                        <input type="text" id="eGroupIcon" class="form-field-input" oninput="updateIconPreview('eGroupIcon', 'eGroupIconPreview')" />
+                        <button type="button" class="btn-secondary-admin" style="padding:0 12px; height:38px; white-space:nowrap; display:inline-flex; align-items:center; gap:6px;" onclick="openIconPicker('eGroupIcon', 'eGroupIconPreview')">
+                            <i class="fas fa-icons text-teal-600"></i> Pilih Ikon
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-field-group">
+                    <label class="form-field-label">Catatan</label>
+                    <textarea id="eGroupNote" class="form-field-input" rows="2" placeholder="Catatan grup menu (opsional)"></textarea>
+                </div>
+
+                <div class="form-field-group" style="margin-top:12px;">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.8rem; font-weight:600;">
+                        <input type="checkbox" id="eGroupActive" style="width:16px; height:16px;" />
+                        <span>Status Grup Aktif</span>
+                    </label>
+                </div>
+
+                <div class="form-field-group" style="margin-top:8px;">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.8rem; font-weight:600;">
+                        <input type="checkbox" id="eGroupDefaultOpen" style="width:16px; height:16px;" />
+                        <span>Buka dropdown grup ini secara default di sidebar navigasi</span>
+                    </label>
+                </div>
+            </div>
+            <div class="admin-modal-foot">
+                <button type="button" class="btn-secondary-admin" onclick="AdminModal.close('modalEditGroup')">Batal</button>
+                <button type="submit" class="btn-primary-admin" id="btnSaveEditGroup">Perbarui</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Kelola Sub-menu dalam Grup -->
+<div class="admin-modal-backdrop" id="modalSubmenus">
+    <div class="admin-modal-card" style="max-width: 680px;">
+        <div class="admin-modal-head">
+            <h4 class="admin-modal-title">
+                Sub-menu Grup: <span id="lblCurrentGroupName" class="text-primary"></span>
+            </h4>
+            <button type="button" class="btn-modal-close" onclick="AdminModal.close('modalSubmenus')">&times;</button>
+        </div>
+        <div class="admin-modal-content">
+            <input type="hidden" id="currentActiveGroupId" />
+
+            <!-- Pengaturan Status Buka Dropdown Otomatis di Sidebar -->
+            <div class="d-flex align-items-center justify-content-between p-2 mb-3 bg-light rounded border">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fas fa-folder-open text-teal-600" style="font-size:18px;"></i>
+                    <div>
+                        <div class="fw-semibold text-dark" style="font-size:12px;">Buka Dropdown Otomatis (Default Terbuka)</div>
+                        <div class="text-muted" style="font-size:11px;">Centang jika ingin dropdown grup ini langsung terbuka secara default di sidebar navigasi.</div>
+                    </div>
+                </div>
+                <div class="form-check form-switch m-0 ms-2">
+                    <input class="form-check-input" type="checkbox" id="chkGroupDefaultOpen" onchange="toggleGroupDefaultOpen(this.checked)" style="width:36px; height:18px; cursor:pointer;" />
+                </div>
+            </div>
+
+            <!-- Form Tambah Menu ke Grup -->
+            <div class="submenus-add-card">
+                <div class="fw-bold mb-2 text-dark" style="font-size:13px;">
+                    <i class="fas fa-plus text-success me-1"></i> Tambahkan Menu Navigasi ke Grup Ini:
+                </div>
+                <div class="row g-2 align-items-end">
+                    <div class="col-7">
+                        <label class="form-field-label small text-muted">Pilih Menu Halaman</label>
+                        <select id="selAddMenu" class="form-field-select" style="font-size:12px;">
+                            <option value="">-- Pilih Menu --</option>
+                        </select>
+                    </div>
+                    <div class="col-2">
+                        <label class="form-field-label small text-muted">Urutan</label>
+                        <input type="number" id="inpAddOrder" class="form-field-input" value="1" min="1" style="font-size:12px;" />
+                    </div>
+                    <div class="col-3">
+                        <button type="button" class="btn-primary-admin w-100" id="btnAddMenuToGroup" onclick="addMenuToGroup()" style="font-size:12px; height:36px; padding:0 8px;">
+                            <i class="fas fa-plus"></i> Tambahkan
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabel Daftar Sub-menu -->
+            <div class="d-flex justify-content-between align-items-center mb-2 px-1 text-muted" style="font-size:11.5px;">
+                <span><i class="fas fa-info-circle text-teal me-1"></i> Ubah angka urutan atau klik panah untuk mengatur urutan sub-menu:</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle w-100" id="tableGroupItems">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 105px; text-align:center;">URUTAN</th>
+                            <th style="width: 40px; text-align:center;">IKON</th>
+                            <th>LABEL SUB-MENU</th>
+                            <th>URL ROUTE</th>
+                            <th style="width: 80px; text-align:center;">AKSI</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyGroupItems">
+                        <!-- Rendered dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="admin-modal-foot">
+            <button type="button" class="btn-secondary-admin" onclick="AdminModal.close('modalSubmenus')">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Visual Icon Picker -->
+<div class="admin-modal-backdrop modal-stacked" id="modalIconPicker" style="z-index: 3000 !important;">
+    <div class="admin-modal-card" style="max-width: 680px; width: 95%;">
+        <div class="admin-modal-head">
+            <h4 class="admin-modal-title" style="display:flex; align-items:center; gap:8px;">
+                <i class="fas fa-icons" style="color:#0f766e;"></i> Pilih Ikon FontAwesome
+            </h4>
+            <button type="button" class="btn-modal-close" onclick="AdminModal.close('modalIconPicker')">&times;</button>
+        </div>
+        <div class="admin-modal-content" style="padding:16px 20px;">
+            <div style="margin-bottom: 12px; position:relative;">
+                <input type="text" id="iconPickerSearch" class="form-field-input" placeholder="Ketik kata kunci untuk mencari ikon (contoh: folder, user, chart, money, settings, heart)..." style="padding-left:36px;" oninput="filterIcons()" />
+                <i class="fas fa-search" style="position:absolute; left:12px; top:12px; color:#94a3b8; font-size:14px;"></i>
+            </div>
+            <div style="font-size:0.75rem; color:#64748b; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                <span>Klik ikon untuk langsung memilih dan mengisi kolom input.</span>
+                <span id="iconMatchCount" style="font-weight:600; color:#0f766e;"></span>
+            </div>
+            <div id="iconGridContainer" style="display:flex; flex-wrap:wrap; gap:8px; max-height:360px; overflow-y:auto; padding:4px;">
+                <!-- Generated dynamically via JS -->
+            </div>
+        </div>
+        <div class="admin-modal-foot">
+            <button type="button" class="btn-secondary-admin" onclick="AdminModal.close('modalIconPicker')">Tutup</button>
+        </div>
+    </div>
+</div>
+
+    </div> <!-- Close outer col-12 -->
+</div> <!-- Close outer row -->
+
+@section Scripts {
+<script>
+    var dtGroups = null;
+    var cachedAllMenus = [];
+    var activeTargetInput = 'cGroupIcon';
+    var activeTargetPreview = 'cGroupIconPreview';
+    var iconCatalog = window.FONT_AWESOME_ICONS || [];
+
+    function updateIconPreview(inputId, previewId) {
+        var val = $('#' + inputId).val() || 'fas fa-folder';
+        $('#' + previewId).html(`<i class="${escHtml(val)}"></i>`);
+    }
+
+    function renderIconGrid(list) {
+        var $grid = $('#iconGridContainer');
+        $grid.empty();
+        $('#iconMatchCount').text(list.length + ' ikon tersedia');
+
+        if (list.length === 0) {
+            $grid.html('<div style="grid-column: 1 / -1; text-align:center; padding:30px; color:#94a3b8;"><i class="fas fa-search" style="font-size:24px; margin-bottom:8px; display:block;"></i>Tidak ada ikon yang cocok</div>');
+            return;
+        }
+
+        var currentVal = $('#' + activeTargetInput).val();
+
+        list.forEach(function(item) {
+            var isSelected = (currentVal === item.cls);
+            var card = $(`
+                <div class="icon-pick-btn ${isSelected ? 'selected' : ''}" data-class="${item.cls}" title="${item.cls}" style="
+                    display:flex; flex-direction:column; align-items:center; justify-content:center;
+                    padding:10px 4px; border-radius:8px; border:1px solid ${isSelected ? '#0f766e' : '#e2e8f0'};
+                    background:${isSelected ? '#f0fdfa' : '#ffffff'}; cursor:pointer; transition:all 0.15s ease;
+                    text-align:center; width: 72px; min-height: 64px;
+                ">
+                    <i class="${item.cls}" style="font-size:20px; color:${isSelected ? '#0f766e' : '#334155'}; margin-bottom:4px;"></i>
+                    <span style="font-size:9px; color:#64748b; line-height:1.1; word-break:break-all; max-width:100%; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">
+                        ${item.cls.replace('fas fa-', '')}
+                    </span>
+                </div>
+            `);
+
+            card.hover(
+                function() { $(this).css({ 'background': '#f8fafc', 'border-color': '#0f766e', 'transform': 'translateY(-2px)' }); },
+                function() { 
+                    var curSel = ($('#' + activeTargetInput).val() === item.cls);
+                    $(this).css({ 
+                        'background': curSel ? '#f0fdfa' : '#ffffff', 
+                        'border-color': curSel ? '#0f766e' : '#e2e8f0', 
+                        'transform': 'none' 
+                    }); 
+                }
+            );
+
+            card.on('click', function() {
+                pickIcon(item.cls);
+            });
+
+            $grid.append(card);
+        });
+    }
+
+    window.openIconPicker = function(targetInputId, previewSpanId) {
+        activeTargetInput = targetInputId;
+        activeTargetPreview = previewSpanId;
+        $('#iconPickerSearch').val('');
+        renderIconGrid(iconCatalog);
+        AdminModal.open('modalIconPicker');
+        setTimeout(function() {
+            $('#iconPickerSearch').focus();
+        }, 150);
+    };
+
+    window.pickIcon = function(cls) {
+        $('#' + activeTargetInput).val(cls);
+        $('#' + activeTargetPreview).html('<i class="' + cls + '"></i>');
+        AdminModal.close('modalIconPicker');
+        AdminToast.success('Ikon ' + cls + ' dipilih');
+    };
+
+    window.filterIcons = function() {
+        var query = ($('#iconPickerSearch').val() || '').toLowerCase().trim();
+        if (!query) {
+            renderIconGrid(iconCatalog);
+            return;
+        }
+        var filtered = iconCatalog.filter(function(item) {
+            return item.cls.toLowerCase().includes(query) || item.name.toLowerCase().includes(query);
+        });
+        renderIconGrid(filtered);
+    };
+
+    function renderGroupsTable(data) {
+        if ($.fn.DataTable.isDataTable('#tableGroups')) {
+            $('#tableGroups').DataTable().destroy();
+        }
+        dtGroups = $('#tableGroups').DataTable({
+            data: data || [],
+            pageLength: 10,
+            lengthMenu: [
+                [10, 25, 50, 100, -1],
+                [10, 25, 50, 100, "Semua"]
+            ],
+            columns: [
+                {
+                    data: null,
+                    className: "text-center fw-bold text-muted",
+                    render: function (data, type, row, meta) {
+                        return meta.row + 1;
+                    }
+                },
+                {
+                    data: 'iconClass',
+                    className: "text-center",
+                    render: function (data) {
+                        return `<i class="${data || 'fas fa-folder'}" style="font-size:17px; color:#0f766e;"></i>`;
+                    }
+                },
+                {
+                    data: 'name',
+                    render: function (data, type, row) {
+                        var openBadge = (row.isOpenDefault === true) 
+                            ? `<span class="badge bg-teal-subtle text-teal border border-teal-subtle ms-1" style="font-size:10px; font-weight:600;"><i class="fas fa-folder-open me-1"></i>Auto-Open</span>` 
+                            : '';
+                        return `<strong style="color:#0f172a; font-size:14px;">${escHtml(data)}</strong> ${openBadge}`;
+                    }
+                },
+                {
+                    data: 'note',
+                    render: function (data) {
+                        return data ? `<span class="text-muted small">${escHtml(data)}</span>` : '<span class="text-muted small">-</span>';
+                    }
+                },
+                {
+                    data: 'itemCount',
+                    className: "text-center",
+                    render: function (data, type, row) {
+                        var count = data || (row.items ? row.items.length : 0);
+                        return `<span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1" style="font-size:12px; font-weight:600;">
+                            ${count} Sub-menu
+                        </span>`;
+                    }
+                },
+                {
+                    data: 'isActive',
+                    render: function (data) {
+                        return data !== false
+                            ? '<span class="status-pill pill-active"><span class="dot-indicator"></span>Aktif</span>'
+                            : '<span class="status-pill pill-inactive"><span class="dot-indicator"></span>Nonaktif</span>';
+                    }
+                },
+                {
+                    data: 'id',
+                    orderable: false,
+                    className: "text-end",
+                    render: function (data, type, row) {
+                        return `
+                            <button type="button" class="btn-table-action btn-table-edit" onclick="openManageSubmenusModal(${data}, '${escHtml(row.name)}', ${row.isOpenDefault === true})">
+                                <i class="fas fa-list-ul"></i> Sub-menu
+                            </button>
+                            <button type="button" class="btn-table-action btn-table-edit" onclick="openEditGroupModal(${data})">
+                                <i class="fas fa-pen"></i> Edit
+                            </button>
+                            <button type="button" class="btn-table-action btn-table-del" onclick="delGroup(${data}, '${escHtml(row.name)}')">
+                                <i class="fas fa-trash"></i> Hapus
+                            </button>
+                        `;
+                    }
+                }
+            ]
+        });
+    }
+
+    function loadGroups() {
+        $.ajax({
+            url: API_BASE_URL + '/groups',
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                renderGroupsTable(data || []);
+            },
+            error: function () {
+                AdminToast.error('Gagal memuat data grup menu');
+                renderGroupsTable([]);
+            }
+        });
+    }
+
+    function ensureAllMenus(callback) {
+        if (cachedAllMenus.length > 0) {
+            if (callback) callback(cachedAllMenus);
+            return;
+        }
+        $.ajax({
+            url: API_BASE_URL + '/menus',
+            type: 'GET',
+            dataType: 'json',
+            success: function (menus) {
+                cachedAllMenus = menus || [];
+                if (callback) callback(cachedAllMenus);
+            }
+        });
+    }
+
+    window.openCreateGroupModal = function () {
+        $('#formCreateGroup')[0].reset();
+        $('#cGroupActive').prop('checked', true);
+        $('#cGroupDefaultOpen').prop('checked', false);
+        $('#cGroupNote').val('');
+        $('#cGroupIcon').val('fas fa-folder');
+        updateIconPreview('cGroupIcon', 'cGroupIconPreview');
+        AdminModal.open('modalCreateGroup');
+    };
+
+    window.submitCreateGroup = function () {
+        var name = $('#cGroupName').val();
+        if (!name) return;
+
+        var fd = new FormData();
+        fd.append('Name', name.trim());
+        fd.append('IconClass', $('#cGroupIcon').val() || 'fas fa-folder');
+        fd.append('OrderIndex', 0);
+        fd.append('Note', ($('#cGroupNote').val() || '').trim());
+        fd.append('IsOpenDefault', $('#cGroupDefaultOpen').is(':checked'));
+        fd.append('IsActive', $('#cGroupActive').is(':checked'));
+
+        $('#btnSaveCreateGroup').prop('disabled', true).text('Menyimpan...');
+
+        $.ajax({
+            url: API_BASE_URL + '/groups',
+            type: 'POST',
+            data: fd,
+            processData: false,
+            contentType: false,
+            success: function () {
+                $('#btnSaveCreateGroup').prop('disabled', false).text('Simpan Grup');
+                AdminModal.close('modalCreateGroup');
+                AdminToast.success('Grup menu berhasil dibuat');
+                loadGroups();
+                Object.keys(sessionStorage).forEach(function (k) {
+                    if (k.startsWith('bringtime_menus_') || k.startsWith('saaso_menus_')) sessionStorage.removeItem(k);
+                });
+            },
+            error: function (xhr) {
+                $('#btnSaveCreateGroup').prop('disabled', false).text('Simpan Grup');
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Gagal membuat grup';
+                AdminToast.error(msg);
+            }
+        });
+    };
+
+    window.openEditGroupModal = function (id) {
+        $.ajax({
+            url: API_BASE_URL + '/groups/' + id,
+            type: 'GET',
+            dataType: 'json',
+            success: function (g) {
+                $('#editGroupId').val(g.id);
+                $('#eGroupName').val(g.name);
+                $('#eGroupIcon').val(g.iconClass || 'fas fa-folder');
+                $('#eGroupNote').val(g.note || '');
+                updateIconPreview('eGroupIcon', 'eGroupIconPreview');
+                $('#eGroupActive').prop('checked', g.isActive !== false);
+                $('#eGroupDefaultOpen').prop('checked', g.isOpenDefault === true);
+
+                AdminModal.open('modalEditGroup');
+            },
+            error: function () {
+                AdminToast.error('Gagal mengambil data grup');
+            }
+        });
+    };
+
+    window.submitEditGroup = function () {
+        var id = $('#editGroupId').val();
+        var name = $('#eGroupName').val();
+        if (!name) return;
+
+        var fd = new FormData();
+        fd.append('Id', id);
+        fd.append('Name', name.trim());
+        fd.append('IconClass', $('#eGroupIcon').val() || 'fas fa-folder');
+        fd.append('OrderIndex', 0);
+        fd.append('Note', ($('#eGroupNote').val() || '').trim());
+        fd.append('IsOpenDefault', $('#eGroupDefaultOpen').is(':checked'));
+        fd.append('IsActive', $('#eGroupActive').is(':checked'));
+
+        $('#btnSaveEditGroup').prop('disabled', true).text('Menyimpan...');
+
+        $.ajax({
+            url: API_BASE_URL + '/groups/' + id,
+            type: 'POST',
+            data: fd,
+            processData: false,
+            contentType: false,
+            success: function () {
+                $('#btnSaveEditGroup').prop('disabled', false).text('Perbarui');
+                AdminModal.close('modalEditGroup');
+                AdminToast.success('Grup menu berhasil diperbarui');
+                loadGroups();
+                Object.keys(sessionStorage).forEach(function (k) {
+                    if (k.startsWith('bringtime_menus_') || k.startsWith('saaso_menus_')) sessionStorage.removeItem(k);
+                });
+            },
+            error: function (xhr) {
+                $('#btnSaveEditGroup').prop('disabled', false).text('Perbarui');
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Gagal memperbarui grup';
+                AdminToast.error(msg);
+            }
+        });
+    };
+
+    window.delGroup = function (id, name) {
+        if (confirm(`Apakah Anda yakin ingin menghapus grup menu "${name}"? Seluruh konfigurasi grup ini pada peran juga akan dihapus.`)) {
+            $.ajax({
+                url: API_BASE_URL + '/groups/' + id,
+                type: 'DELETE',
+                dataType: 'json',
+                success: function () {
+                    AdminToast.success('Grup menu berhasil dihapus');
+                    loadGroups();
+                    Object.keys(sessionStorage).forEach(function (k) {
+                        if (k.startsWith('bringtime_menus_') || k.startsWith('saaso_menus_')) sessionStorage.removeItem(k);
+                    });
+                },
+                error: function () {
+                    AdminToast.error('Gagal menghapus grup menu');
+                }
+            });
+        }
+    };
+
+    // Sub-menu Management in Modal
+    window.openManageSubmenusModal = function (groupId, groupName, isOpenDefault) {
+        $('#currentActiveGroupId').val(groupId);
+        $('#lblCurrentGroupName').text(groupName);
+
+        if (typeof isOpenDefault === 'boolean') {
+            $('#chkGroupDefaultOpen').prop('checked', isOpenDefault);
+        } else {
+            $.ajax({
+                url: API_BASE_URL + '/groups/' + groupId,
+                type: 'GET',
+                dataType: 'json',
+                success: function(g) {
+                    $('#chkGroupDefaultOpen').prop('checked', g.isOpenDefault === true);
+                }
+            });
+        }
+
+        ensureAllMenus(function (menus) {
+            var $sel = $('#selAddMenu').empty().append('<option value="">-- Pilih Menu --</option>');
+            menus.forEach(function (m) {
+                $sel.append(`<option value="${m.id}">${escHtml(m.label || m.namaMenu)} (${escHtml(m.routeUrl || m.url)})</option>`);
+            });
+            loadGroupSubmenus(groupId);
+            AdminModal.open('modalSubmenus');
+        });
+    };
+
+    window.toggleGroupDefaultOpen = function (isChecked) {
+        var groupId = $('#currentActiveGroupId').val();
+        if (!groupId) return;
+
+        $.ajax({
+            url: API_BASE_URL + '/groups/' + groupId + '/toggle-default-open?isOpen=' + isChecked,
+            type: 'POST',
+            dataType: 'json',
+            success: function (res) {
+                AdminToast.success(res.message || 'Pengaturan default dropdown berhasil disimpan');
+                loadGroups();
+                Object.keys(sessionStorage).forEach(function (k) {
+                    if (k.startsWith('bringtime_menus_') || k.startsWith('saaso_menus_')) sessionStorage.removeItem(k);
+                });
+            },
+            error: function () {
+                AdminToast.error('Gagal memperbarui status default dropdown');
+                $('#chkGroupDefaultOpen').prop('checked', !isChecked);
+            }
+        });
+    };
+
+    var currentGroupSubmenus = [];
+
+    function loadGroupSubmenus(groupId) {
+        $.ajax({
+            url: API_BASE_URL + '/menugroups/group/' + groupId,
+            type: 'GET',
+            dataType: 'json',
+            success: function (items) {
+                var list = items || [];
+                list.sort(function (a, b) { return (a.orderIndex || 0) - (b.orderIndex || 0); });
+                currentGroupSubmenus = list;
+
+                var html = '';
+                if (list.length === 0) {
+                    html = `<tr><td colspan="5" class="text-center text-muted py-3">Belum ada sub-menu di dalam grup ini. Silakan pilih menu di atas untuk menambahkannya.</td></tr>`;
+                    $('#inpAddOrder').val(1);
+                } else {
+                    $('#inpAddOrder').val(list.length + 1);
+                    list.forEach(function (item) {
+                        html += `
+                            <tr>
+                                <td class="text-center" style="width: 105px;">
+                                    <div class="d-inline-flex align-items-center gap-1">
+                                        <input type="number" class="form-control form-control-sm text-center px-1 fw-bold" style="width: 50px; height: 28px; font-size: 12px; border-color: #cbd5e1;" value="${item.orderIndex || 0}" min="0" onchange="updateMenuGroupOrder(${item.id}, this.value)" title="Ketik angka urutan lalu Enter" />
+                                        <div class="d-flex flex-column" style="line-height:1;">
+                                            <button type="button" class="btn btn-xs btn-light border p-0 px-1 text-secondary" style="font-size: 8px; line-height: 1.1;" title="Geser Naik" onclick="moveMenuGroupOrder(${item.id}, -1)">
+                                                <i class="fas fa-chevron-up"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-xs btn-light border p-0 px-1 text-secondary" style="font-size: 8px; line-height: 1.1;" title="Geser Turun" onclick="moveMenuGroupOrder(${item.id}, 1)">
+                                                <i class="fas fa-chevron-down"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <i class="${item.menuIcon || 'fas fa-circle-dot'} text-secondary"></i>
+                                </td>
+                                <td>
+                                    <strong style="color:#0f172a;">${escHtml(item.menuLabel)}</strong>
+                                </td>
+                                <td class="text-muted small">${escHtml(item.menuUrl)}</td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" title="Hapus dari grup" onclick="removeMenuFromGroup(${item.id})">
+                                        <i class="fas fa-trash" style="font-size:11px;"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+                $('#tbodyGroupItems').html(html);
+            }
+        });
+    }
+
+    window.addMenuToGroup = function () {
+        var groupId = $('#currentActiveGroupId').val();
+        var menuId = $('#selAddMenu').val();
+        var order = $('#inpAddOrder').val() || 1;
+
+        if (!menuId) {
+            AdminToast.error('Pilih menu yang ingin dimasukkan ke grup');
+            return;
+        }
+
+        var fd = new FormData();
+        fd.append('GroupId', groupId);
+        fd.append('MenuId', menuId);
+        fd.append('OrderIndex', order);
+        fd.append('IsActive', true);
+
+        $('#btnAddMenuToGroup').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+        $.ajax({
+            url: API_BASE_URL + '/menugroups',
+            type: 'POST',
+            data: fd,
+            processData: false,
+            contentType: false,
+            success: function () {
+                $('#btnAddMenuToGroup').prop('disabled', false).html('<i class="fas fa-plus"></i> Tambahkan');
+                AdminToast.success('Menu berhasil ditambahkan ke grup');
+                $('#selAddMenu').val('');
+                loadGroupSubmenus(groupId);
+                loadGroups(); // refresh group counter
+            },
+            error: function (xhr) {
+                $('#btnAddMenuToGroup').prop('disabled', false).html('<i class="fas fa-plus"></i> Tambahkan');
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Gagal menambahkan menu ke grup';
+                AdminToast.error(msg);
+            }
+        });
+    };
+
+    window.removeMenuFromGroup = function (id) {
+        if (confirm('Keluarkan menu ini dari grup?')) {
+            $.ajax({
+                url: API_BASE_URL + '/menugroups/' + id,
+                type: 'DELETE',
+                dataType: 'json',
+                success: function () {
+                    AdminToast.success('Menu dikeluarkan dari grup');
+                    var groupId = $('#currentActiveGroupId').val();
+                    loadGroupSubmenus(groupId);
+                    loadGroups(); // refresh group counter
+                },
+                error: function () {
+                    AdminToast.error('Gagal mengeluarkan menu dari grup');
+                }
+            });
+        }
+    };
+
+    window.updateMenuGroupOrder = function (id, newOrder) {
+        var orderVal = parseInt(newOrder);
+        if (isNaN(orderVal) || orderVal < 0) orderVal = 0;
+
+        $.ajax({
+            url: API_BASE_URL + '/menugroups/' + id + '/order?orderIndex=' + orderVal,
+            type: 'PUT',
+            dataType: 'json',
+            success: function () {
+                AdminToast.success('Urutan sub-menu berhasil diperbarui');
+                Object.keys(sessionStorage).forEach(function (k) {
+                    if (k.startsWith('bringtime_menus_') || k.startsWith('saaso_menus_')) sessionStorage.removeItem(k);
+                });
+                var groupId = $('#currentActiveGroupId').val();
+                loadGroupSubmenus(groupId);
+            },
+            error: function () {
+                AdminToast.error('Gagal memperbarui urutan sub-menu');
+            }
+        });
+    };
+
+    window.moveMenuGroupOrder = function (id, direction) {
+        var subs = currentGroupSubmenus.slice();
+        subs.sort(function (a, b) { return (a.orderIndex || 0) - (b.orderIndex || 0); });
+
+        var idx = subs.findIndex(function (n) { return n.id === id; });
+        if (idx === -1) return;
+
+        var targetIdx = idx + direction;
+        if (targetIdx < 0 || targetIdx >= subs.length) return; // Sudah paling atas atau bawah
+
+        var currentItem = subs[idx];
+        var targetItem = subs[targetIdx];
+
+        var currentOrder = currentItem.orderIndex || (idx + 1);
+        var targetOrder = targetItem.orderIndex || (targetIdx + 1);
+
+        if (currentOrder === targetOrder) {
+            currentOrder = direction > 0 ? targetOrder + 1 : Math.max(0, targetOrder - 1);
+        } else {
+            var temp = currentOrder;
+            currentOrder = targetOrder;
+            targetOrder = temp;
+        }
+
+        $.when(
+            $.ajax({ url: API_BASE_URL + '/menugroups/' + currentItem.id + '/order?orderIndex=' + currentOrder, type: 'PUT', dataType: 'json' }),
+            $.ajax({ url: API_BASE_URL + '/menugroups/' + targetItem.id + '/order?orderIndex=' + targetOrder, type: 'PUT', dataType: 'json' })
+        ).done(function () {
+            AdminToast.success('Urutan sub-menu berhasil dipindahkan');
+            Object.keys(sessionStorage).forEach(function (k) {
+                if (k.startsWith('bringtime_menus_') || k.startsWith('saaso_menus_')) sessionStorage.removeItem(k);
+            });
+            var groupId = $('#currentActiveGroupId').val();
+            loadGroupSubmenus(groupId);
+        }).fail(function () {
+            AdminToast.error('Gagal memindahkan urutan sub-menu');
+        });
+    };
+
+    $(function () {
+        loadGroups();
+    });
+</script>
+}

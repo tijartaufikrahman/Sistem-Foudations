@@ -1,0 +1,388 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Berita & Laporan Penyaluran";
+}
+
+<style>
+    /* Scoped custom style for Foundation NewsPosts */
+    .news-thumb-img {
+        width: 44px;
+        height: 44px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+    .news-thumb-preview-box {
+        display: none;
+        height: 100px;
+        background: #f1f5f9;
+    }
+    .news-title-cell {
+        max-width: 260px;
+    }
+</style>
+
+<!-- Outermost View Wrapper adhering to aturan_styling.txt -->
+<div class="row">
+    <div class="col-12">
+
+<!-- Breadcrumb Bar: Pojok Kanan Atas Mandiri -->
+<div class="content-breadcrumb-bar">
+    <div class="breadcrumb-nav" id="pageBreadcrumb">
+        <span class="breadcrumb-current">Berita & Artikel</span>
+        <span class="breadcrumb-separator">/</span>
+    </div>
+</div>
+
+<!-- Action Bar: Tombol di bawah Breadcrumb -->
+<div class="content-action-bar">
+    <button type="button" class="btn-primary-admin" id="btnAdd" onclick="openCreateModal()">
+        <i class="fas fa-plus me-1"></i> Buat Berita
+    </button>
+</div>
+
+<div class="admin-card">
+    <div class="table-responsive p-3">
+        <table class="table table-hover align-middle w-100" id="tableNews">
+            <thead class="table-light">
+                <tr>
+                    <th style="width:50px; text-align:center;">NO</th>
+                    <th>Judul Berita</th>
+                    <th>Kategori</th>
+                    <th>Views</th>
+                    <th>Status</th>
+                    <th style="text-align: right; width:110px;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Form -->
+<div class="modal fade" id="modalForm" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <form id="formNews" onsubmit="event.preventDefault(); submitNewsPost();">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="modalTitle">Buat Berita</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="newsId" />
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Judul Berita <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control rounded-3" id="nTitle" placeholder="Contoh: Penyaluran Bantuan Paket Sembako Tahap 1" oninput="autoGenerateSlug(this)" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Slug (URL-friendly) <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control rounded-3" id="nSlug" placeholder="penyaluran-bantuan-sembako-tahap-1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kategori <span class="text-danger">*</span></label>
+                        <select class="form-select rounded-3" id="nCategory" required>
+                            <option value="distribution_report">Laporan Penyaluran Donasi</option>
+                            <option value="news">Kabar Berita Umum</option>
+                            <option value="story">Kisah & Cerita Inspiratif</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Thumbnail URL</label>
+                        <input type="url" class="form-control rounded-3" id="nThumbnailUrl" placeholder="https://images.unsplash.com/photo-..." oninput="previewThumbnail(this)">
+                        <div class="mt-2 rounded-3 border overflow-hidden news-thumb-preview-box" id="thumbPreviewContainer">
+                            <img id="thumbPreviewImg" src="" alt="Thumbnail Preview" style="width:100%; height:100%; object-fit:cover;">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Isi Konten Berita <span class="text-danger">*</span></label>
+                        <textarea class="form-control rounded-3" id="nContent" rows="6" placeholder="Tuliskan laporan rincian kegiatan penyaluran, dokumentasi, dan ucapan terima kasih kepada donatur..." required></textarea>
+                    </div>
+                    <div class="form-check form-switch mb-3" id="statusGroup" style="display:none;">
+                        <input class="form-check-input" type="checkbox" role="switch" id="nIsPublished" checked>
+                        <label class="form-check-label fw-semibold" for="nIsPublished">Publikasikan Langsung</label>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0 px-4 pb-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn-primary-admin" id="btnSaveNews">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    var foundationId = 0;
+    var newsDataTable = null;
+    var allNewsList = [];
+
+    function previewThumbnail(elem) {
+        var url = $(elem).val().trim();
+        if (url) {
+            $('#thumbPreviewImg').attr('src', url);
+            $('#thumbPreviewContainer').show();
+        } else {
+            $('#thumbPreviewContainer').hide();
+        }
+    }
+
+    function autoGenerateSlug(elem) {
+        if (!$('#newsId').val()) {
+            var slug = $(elem).val().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+            $('#nSlug').val(slug);
+        }
+    }
+
+    function renderNewsTable(data) {
+        allNewsList = data || [];
+        if ($.fn.DataTable.isDataTable('#tableNews')) {
+            $('#tableNews').DataTable().destroy();
+        }
+
+        newsDataTable = $('#tableNews').DataTable({
+            data: allNewsList,
+            columns: [
+                {
+                    data: null,
+                    orderable: false,
+                    className: "text-muted",
+                    render: function(data, type, row, meta) {
+                        return meta.row + 1;
+                    }
+                },
+                {
+                    data: 'title',
+                    render: function(data, type, row) {
+                        var img = row.thumbnailUrl ? `<img src="${escHtml(row.thumbnailUrl)}" class="news-thumb-img me-2 flex-shrink-0">` : '';
+                        var postUrl = '/News/' + encodeURIComponent(row.slug || row.id);
+                        return `<div class="d-flex align-items-center">${img} <a href="${postUrl}" target="_blank" class="fw-semibold text-truncate news-title-cell text-dark text-decoration-none text-hover-primary" title="${escHtml(data)}">${escHtml(data)}</a></div>`;
+                    }
+                },
+                {
+                    data: 'category',
+                    render: function(data) {
+                        return data ? `<span class="badge bg-light text-dark border" style="font-size:10.5px;">${escHtml(data.replace('_', ' ').toUpperCase())}</span>` : '-';
+                    }
+                },
+                {
+                    data: 'viewCount',
+                    render: function(data, type, row) {
+                        var count = (data !== undefined && data !== null) ? data : (row.views || 0);
+                        return `<i class="far fa-eye text-muted me-1"></i> ${count}`;
+                    }
+                },
+                {
+                    data: 'isActive',
+                    render: function(data, type, row) {
+                        var active = (data !== undefined && data !== null) ? data : row.isPublished;
+                        return active 
+                            ? '<span class="status-pill pill-active"><span class="dot-indicator"></span>Dipublikasi</span>' 
+                            : '<span class="status-pill pill-inactive"><span class="dot-indicator"></span>Draft</span>';
+                    }
+                },
+                {
+                    data: 'id',
+                    orderable: false,
+                    className: "text-end",
+                    render: function(data, type, row) {
+                        var postUrl = '/News/' + encodeURIComponent(row.slug || row.id);
+                        return `
+                            <div class="d-flex justify-content-end gap-1">
+                                <a href="${postUrl}" target="_blank" class="btn btn-sm btn-outline-info rounded-2" title="Lihat di Web Publik"><i class="fas fa-arrow-up-right-from-square"></i></a>
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-2" onclick="openEditNews(${data})" title="Edit"><i class="fas fa-edit"></i></button>
+                                <button type="button" class="btn btn-sm btn-outline-danger rounded-2" onclick="deleteNews(${data})" title="Hapus"><i class="fas fa-trash"></i></button>
+                            </div>
+                        `;
+                    }
+                }
+            ]
+        });
+    }
+
+    function loadNews() {
+        if (!foundationId || foundationId <= 0) return;
+        $.ajax({
+            url: API_BASE_URL + '/newsposts/foundation/' + foundationId,
+            type: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                renderNewsTable(data || []);
+            },
+            error: function() {
+                AdminToast.error('Gagal mengambil daftar berita');
+                renderNewsTable([]);
+            }
+        });
+    }
+
+    function initFoundationData() {
+        var configuredFid = window.CONFIGURED_FOUNDATION_ID || 0;
+        if (configuredFid > 0) {
+            foundationId = configuredFid;
+            loadNews();
+            return;
+        }
+
+        var currentUser = AuthSession.getUser() || {};
+        var currentUserId = currentUser.id || currentUser.Id || 0;
+        var userFoundId = currentUser.foundationId || currentUser.FoundationId || 0;
+
+        if (userFoundId > 0) {
+            foundationId = userFoundId;
+            loadNews();
+            return;
+        }
+
+        $.ajax({
+            url: API_BASE_URL + '/foundations',
+            type: 'GET',
+            dataType: 'json',
+            success: function(founds) {
+                var list = Array.isArray(founds) ? founds : (founds.data || []);
+                var myFound = (list || []).find(function(f) {
+                    if (f.userId === currentUserId || (f.user && f.user.id === currentUserId)) return true;
+                    if (Array.isArray(f.foundationUsers) && f.foundationUsers.some(function(fu) { return fu.userId === currentUserId; })) return true;
+                    if (Array.isArray(f.userIds) && f.userIds.indexOf(currentUserId) !== -1) return true;
+                    return false;
+                });
+                if (myFound) {
+                    foundationId = myFound.id;
+                    loadNews();
+                } else {
+                    foundationId = 0;
+                    renderNewsTable([]);
+                    AdminToast.warning('Akun Anda belum ditautkan ke organisasi/lembaga manapun.');
+                }
+            },
+            error: function() {
+                AdminToast.error('Gagal memuat profil yayasan');
+            }
+        });
+    }
+
+    function openCreateModal() {
+        $('#formNews')[0].reset();
+        $('#newsId').val('');
+        $('#modalTitle').text('Buat Berita');
+        $('#statusGroup').hide();
+        $('#nIsPublished').prop('checked', true);
+        $('#thumbPreviewContainer').hide();
+        $('#modalForm').modal('show');
+    }
+
+    window.openEditNews = function(id) {
+        var item = allNewsList.find(function(n) { return n.id === id; });
+        if (!item) return;
+
+        $('#newsId').val(item.id);
+        $('#nTitle').val(item.title || '');
+        $('#nSlug').val(item.slug || '');
+        $('#nCategory').val(item.category || 'news');
+        $('#nThumbnailUrl').val(item.thumbnailUrl || '');
+        previewThumbnail($('#nThumbnailUrl'));
+        $('#nContent').val(item.content || '');
+
+        $('#statusGroup').show();
+        var active = (item.isActive !== undefined && item.isActive !== null) ? item.isActive : item.isPublished;
+        $('#nIsPublished').prop('checked', !!active);
+
+        $('#modalTitle').text('Edit Berita');
+        $('#modalForm').modal('show');
+    };
+
+    function submitNewsPost() {
+        var id = $('#newsId').val();
+
+        if (!foundationId || foundationId <= 0) {
+            AdminToast.error('Data yayasan belum terdeteksi. Silakan atur profil yayasan Anda terlebih dahulu.');
+            return;
+        }
+
+        var contentVal = $('#nContent').val().trim();
+        if (!contentVal) {
+            AdminToast.error('Isi konten berita wajib diisi.');
+            return;
+        }
+
+        var payload = {
+            foundationId: foundationId,
+            title: $('#nTitle').val().trim(),
+            slug: $('#nSlug').val().trim(),
+            category: $('#nCategory').val(),
+            content: contentVal,
+            thumbnailUrl: $('#nThumbnailUrl').val().trim() || null,
+            isActive: $('#nIsPublished').is(':checked')
+        };
+
+        var method = id ? 'PUT' : 'POST';
+        var url = API_BASE_URL + '/newsposts' + (id ? '/' + id : '');
+        if (id) payload.id = parseInt(id);
+
+        var $btn = $('#btnSaveNews');
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...');
+
+        $.ajax({
+            url: url,
+            type: method,
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function(res) {
+                $('#modalForm').modal('hide');
+                $btn.prop('disabled', false).text('Simpan');
+                AdminToast.success(id ? 'Berita berhasil diperbarui' : 'Berita berhasil dibuat');
+                loadNews();
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false).text('Simpan');
+                var msg = 'Terjadi kesalahan sistem saat menyimpan berita.';
+                if (xhr.responseJSON) {
+                    if (typeof xhr.responseJSON.message === 'string' && xhr.responseJSON.message.trim()) {
+                        msg = xhr.responseJSON.message;
+                    } else if (xhr.responseJSON.errors && typeof xhr.responseJSON.errors === 'object') {
+                        var list = [];
+                        for (var k in xhr.responseJSON.errors) {
+                            if (Array.isArray(xhr.responseJSON.errors[k])) {
+                                list.push(xhr.responseJSON.errors[k].join(', '));
+                            } else {
+                                list.push(xhr.responseJSON.errors[k]);
+                            }
+                        }
+                        if (list.length > 0) msg = list.join(' | ');
+                    } else if (typeof xhr.responseJSON.title === 'string') {
+                        msg = xhr.responseJSON.title;
+                    }
+                } else if (xhr.responseText) {
+                    msg = xhr.responseText.substring(0, 150);
+                }
+                AdminToast.error(msg);
+            }
+        });
+    }
+
+    window.deleteNews = function(id) {
+        if (!confirm('Yakin ingin menghapus berita ini?')) return;
+
+        $.ajax({
+            url: API_BASE_URL + '/newsposts/' + id,
+            type: 'DELETE',
+            dataType: 'json',
+            success: function() {
+                AdminToast.success('Berita telah dihapus');
+                loadNews();
+            },
+            error: function() {
+                AdminToast.error('Gagal menghapus berita');
+            }
+        });
+    };
+
+    $(document).ready(function() {
+        initFoundationData();
+    });
+</script>
+}

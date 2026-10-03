@@ -1,0 +1,365 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Dashboard";
+}
+
+<style>
+    /* Scoped styling for Admin Dashboard */
+    .dashboard-stat-grid {
+        margin-bottom: 1.5rem;
+    }
+    .dash-server-meta small {
+        color: #64748b;
+        font-size: 10px;
+    }
+</style>
+
+<!-- Outermost View Wrapper adhering to aturan_styling.txt -->
+<div class="row">
+    <div class="col-12">
+
+<div class="content-breadcrumb-bar justify-content-end mb-3">
+    <div class="breadcrumb-nav" id="pageBreadcrumb">
+        <span class="breadcrumb-current">Dashboard</span>
+        <span class="breadcrumb-separator">/</span>
+    </div>
+</div>
+
+<!-- 3 Key Stat Metric Cards for Software House Platform -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-4 col-md-4 col-sm-6">
+        <div class="stat-card-box">
+            <div class="stat-header">
+                <span class="stat-label-text">Mitra Terdaftar</span>
+                <div class="stat-icon-wrapper stat-icon-purple">
+                    <i class="fas fa-handshake"></i>
+                </div>
+            </div>
+            <div>
+                <div class="stat-number-value" id="kpiFoundations">0</div>
+                <div class="stat-subtext">
+                    <span class="status-pill pill-active" style="padding:1px 6px; font-size:10px;" id="kpiActiveFoundationsBadge">0 Aktif</span>
+                    <span>Mitra layanan aktif</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 col-md-4 col-sm-6">
+        <div class="stat-card-box">
+            <div class="stat-header">
+                <span class="stat-label-text">Total Akun Pengguna</span>
+                <div class="stat-icon-wrapper stat-icon-teal">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+            <div>
+                <div class="stat-number-value" id="kpiUsers">0</div>
+                <div class="stat-subtext">
+                    <span class="status-pill pill-role" style="padding:1px 6px; font-size:10px;">Semua Role</span>
+                    <span>Admin, mitra, pengguna</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 col-md-4 col-sm-6">
+        <div class="stat-card-box">
+            <div class="stat-header">
+                <span class="stat-label-text">Peran & Otoritas</span>
+                <div class="stat-icon-wrapper stat-icon-blue">
+                    <i class="fas fa-shield-halved"></i>
+                </div>
+            </div>
+            <div>
+                <div class="stat-number-value" id="kpiRoles">0</div>
+                <div class="stat-subtext">
+                    <span class="status-pill pill-role" style="padding:1px 6px; font-size:10px;" id="kpiMenusBadge">0 Menu</span>
+                    <span>Hak akses RBAC</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Content Grid: Platform Management -->
+<div class="row g-3">
+    <div class="col-12">
+        <!-- Direktori Mitra Terdaftar -->
+        <div class="admin-card mb-3">
+            <div class="admin-card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="admin-card-title">Direktori Mitra Terdaftar</h3>
+                    <p class="admin-card-desc">Daftar entitas & organisasi mitra, kontak perwakilan, legalitas, dan status operasional tenant</p>
+                </div>
+                <a href="/Foundations" class="btn btn-sm btn-outline-secondary" style="font-size:11px;">
+                    Kelola Mitra <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="table-responsive p-3">
+                <table class="table table-hover align-middle w-100" id="tableFoundationsList">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 45px; text-align:center;">NO</th>
+                            <th>NAMA MITRA</th>
+                            <th>PENANGGUNG JAWAB</th>
+                            <th>REKENING PENCAIRAN</th>
+                            <th>STATUS</th>
+                            <th style="text-align:right; width: 60px;">AKSI</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Akun Pengguna Platform Terbaru -->
+        <div class="admin-card">
+            <div class="admin-card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="admin-card-title">Akun Pengguna Platform</h3>
+                    <p class="admin-card-desc">Pengguna multi-role terdaftar yang mengelola entitas mitra atau bertransaksi dalam ekosistem</p>
+                </div>
+                <a href="/Users" class="btn btn-sm btn-outline-secondary" style="font-size:11px;">
+                    Kelola Pengguna <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="table-responsive p-3">
+                <table class="table table-hover align-middle w-100" id="tableUsersList">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 45px; text-align:center;">NO</th>
+                            <th>PENGGUNA</th>
+                            <th>TELEPON</th>
+                            <th>PERAN UTAMA</th>
+                            <th>STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+    </div> <!-- Close outer col-12 -->
+</div> <!-- Close outer row -->
+
+@section Scripts {
+<script>
+    function formatRupiah(num) {
+        if (!num && num !== 0) return 'Rp 0';
+        return 'Rp ' + Number(num).toLocaleString('id-ID');
+    }
+
+    function formatDateIndo(dateStr) {
+        if (!dateStr) return '-';
+        var d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        return d.toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'short',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    var dtFoundations = null;
+    var dtUsers = null;
+
+    function renderFoundationsTable(data) {
+        if ($.fn.DataTable.isDataTable('#tableFoundationsList')) {
+            $('#tableFoundationsList').DataTable().destroy();
+        }
+        dtFoundations = $('#tableFoundationsList').DataTable({
+            data: data || [],
+            pageLength: 10,
+            lengthMenu: [
+                [10, 25, 50, 100, -1],
+                [10, 25, 50, 100, "Semua"]
+            ],
+            columns: [
+                {
+                    data: null,
+                    className: "text-center fw-bold text-muted",
+                    render: function (data, type, row, meta) {
+                        return meta.row + 1;
+                    }
+                },
+                {
+                    data: 'name',
+                    render: function (data, type, row) {
+                        return `
+                            <div>
+                                <strong style="color:#0f172a; font-weight:600;">${escHtml(data)}</strong>
+                                <small class="d-block" style="color:#64748b; font-size:11px;">
+                                    <i class="fas fa-file-contract me-1"></i>${escHtml(row.legalPermitNumber || 'Belum berizin')}
+                                </small>
+                            </div>
+                        `;
+                    }
+                },
+                {
+                    data: null,
+                    render: function (data, type, row) {
+                        var picName = row.user ? row.user.name : (row.userName || 'Belum Ditautkan');
+                        return `
+                            <div style="font-size:0.8rem; color:#0f172a; font-weight:500;">
+                                ${escHtml(picName)}
+                            </div>
+                            <small style="color:#64748b; font-size:11px;">
+                                <i class="fab fa-whatsapp me-1" style="color:#16a34a;"></i>${escHtml(row.whatsappNumber || '-')}
+                            </small>
+                        `;
+                    }
+                },
+                {
+                    data: null,
+                    render: function (data, type, row) {
+                        return `
+                            <div style="font-size:0.8rem; color:#0f172a; font-weight:600;">
+                                ${escHtml(row.bankName || '-')}
+                            </div>
+                            <small class="code-tag" style="font-size:11px;">
+                                ${escHtml(row.bankAccountNumber || '-')}
+                            </small>
+                        `;
+                    }
+                },
+                {
+                    data: 'isActive',
+                    render: function (data) {
+                        return data
+                            ? '<span class="status-pill pill-active"><span class="dot-indicator"></span>Aktif</span>'
+                            : '<span class="status-pill pill-inactive"><span class="dot-indicator"></span>Nonaktif</span>';
+                    }
+                },
+                {
+                    data: 'id',
+                    orderable: false,
+                    className: "text-end",
+                    render: function () {
+                        return `
+                            <a href="/Foundations" class="btn btn-sm btn-light border px-2 py-1" style="font-size:11px;" title="Detail Mitra">
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
+                        `;
+                    }
+                }
+            ]
+        });
+    }
+
+    function renderUsersTable(data) {
+        if ($.fn.DataTable.isDataTable('#tableUsersList')) {
+            $('#tableUsersList').DataTable().destroy();
+        }
+        dtUsers = $('#tableUsersList').DataTable({
+            data: data || [],
+            pageLength: 10,
+            lengthMenu: [
+                [10, 25, 50, 100, -1],
+                [10, 25, 50, 100, "Semua"]
+            ],
+            columns: [
+                {
+                    data: null,
+                    className: "text-center fw-bold text-muted",
+                    render: function (data, type, row, meta) {
+                        return meta.row + 1;
+                    }
+                },
+                {
+                    data: 'name',
+                    render: function (data, type, row) {
+                        var initial = (data || row.email || 'U').charAt(0).toUpperCase();
+                        return `
+                            <div class="avatar-cell">
+                                <div class="avatar-circle">${initial}</div>
+                                <div>
+                                    <strong style="color:#0f172a;">${escHtml(data || 'Pengguna')}</strong>
+                                    <small class="d-block" style="color:#94a3b8; font-size:11px;">${escHtml(row.email || '-')}</small>
+                                </div>
+                            </div>
+                        `;
+                    }
+                },
+                {
+                    data: 'phoneNumber',
+                    render: function (data) {
+                        return `<span style="font-size:0.8rem; color:#475569;">${escHtml(data || '-')}</span>`;
+                    }
+                },
+                {
+                    data: null,
+                    render: function (data, type, row) {
+                        var roleName = row.roles || '';
+                        if (!roleName && row.userRoles && row.userRoles.length > 0) {
+                            roleName = row.userRoles[0].role ? (row.userRoles[0].role.displayName || row.userRoles[0].role.name) : 'Role';
+                        }
+                        return `<span class="status-pill pill-role">${escHtml(roleName || 'User')}</span>`;
+                    }
+                },
+                {
+                    data: 'isActive',
+                    render: function (data) {
+                        return data
+                            ? '<span class="status-pill pill-active"><span class="dot-indicator"></span>Aktif</span>'
+                            : '<span class="status-pill pill-inactive"><span class="dot-indicator"></span>Nonaktif</span>';
+                    }
+                }
+            ]
+        });
+    }
+
+    function loadDashboardData() {
+        // 1. Ambil Statistik Ringkasan Platform via $.ajax lengkap
+        $.ajax({
+            url: API_BASE_URL + '/dashboard/stats',
+            type: 'GET',
+            dataType: 'json',
+            success: function (res) {
+                var d = (res && res.data) ? res.data : (res || {});
+                $('#kpiFoundations').text(d.totalFoundations || 0);
+                $('#kpiActiveFoundationsBadge').text((d.activeFoundations || d.totalFoundations || 0) + ' Aktif');
+                $('#kpiUsers').text(d.totalUsers || 0);
+                $('#kpiRoles').text(d.totalRoles || 0);
+                $('#kpiMenusBadge').text((d.totalMenus || 0) + ' Menu');
+            },
+            error: function (xhr, status, err) {
+                console.error('Error stats:', err);
+            }
+        });
+
+        // 2. Ambil Direktori Mitra Terdaftar via $.ajax lengkap
+        $.ajax({
+            url: API_BASE_URL + '/foundations',
+            type: 'GET',
+            dataType: 'json',
+            success: function (foundations) {
+                renderFoundationsTable(foundations || []);
+            },
+            error: function () {
+                renderFoundationsTable([]);
+            }
+        });
+
+        // 3. Ambil Akun Pengguna Platform via $.ajax lengkap
+        $.ajax({
+            url: API_BASE_URL + '/users',
+            type: 'GET',
+            dataType: 'json',
+            success: function (users) {
+                renderUsersTable(users || []);
+            },
+            error: function () {
+                renderUsersTable([]);
+            }
+        });
+    }
+
+    $(function () {
+        loadDashboardData();
+    });
+</script>
+}

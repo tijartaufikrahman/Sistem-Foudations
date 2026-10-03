@@ -1,0 +1,790 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Kelola Mitra";
+}
+
+<style>
+    /* Scoped custom styling for Admin Foundations */
+    .fnd-avatar-circle {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    /* Multi-User PIC Selector Styling */
+    .pic-selector-container {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        background: #f8fafc;
+        padding: 12px;
+    }
+    .pic-search-box {
+        position: relative;
+        margin-bottom: 8px;
+    }
+    .pic-search-box i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        font-size: 13px;
+        pointer-events: none;
+    }
+    .pic-search-input {
+        width: 100%;
+        padding: 8px 12px 8px 34px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 13px;
+        outline: none;
+        background: #ffffff;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .pic-search-input:focus {
+        border-color: #0d9488;
+        box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.15);
+    }
+    .pic-list-scroll {
+        max-height: 155px;
+        overflow-y: auto;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 4px;
+    }
+    .pic-item-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.15s;
+        margin-bottom: 2px;
+        user-select: none;
+    }
+    .pic-item-label:hover {
+        background: #f1f5f9;
+    }
+    .pic-item-label input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: #0d9488;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+    .pic-user-avatar {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: #0f766e;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .pic-user-info {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.25;
+    }
+    .pic-user-name {
+        font-weight: 600;
+        font-size: 12.5px;
+        color: #1e293b;
+    }
+    .pic-user-email {
+        font-size: 11px;
+        color: #64748b;
+    }
+    .pic-selected-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #ccfbf1;
+        color: #0f766e;
+        border: 1px solid #99f6e4;
+        border-radius: 999px;
+        padding: 2px 10px;
+        font-size: 11.5px;
+        font-weight: 600;
+        margin-right: 4px;
+        margin-bottom: 4px;
+    }
+    .pic-badge-remove {
+        cursor: pointer;
+        color: #0f766e;
+        font-size: 12px;
+        line-height: 1;
+    }
+    .pic-badge-remove:hover {
+        color: #dc2626;
+    }
+    .website-resmi-badge {
+        background: #0d9488 !important;
+        color: #ffffff !important;
+        font-size: 11.5px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        text-decoration: none;
+        padding: 4px 10px;
+        font-weight: 600;
+        transition: background-color 0.15s ease, opacity 0.15s ease;
+    }
+    .website-resmi-badge:hover,
+    .website-resmi-badge:focus {
+        background: #0f766e !important;
+        color: #ffffff !important;
+        opacity: 0.95;
+    }
+    .website-resmi-badge i {
+        color: #ffffff !important;
+    }
+</style>
+
+<!-- Outermost View Wrapper adhering to aturan_styling.txt -->
+<div class="row">
+    <div class="col-12">
+
+<!-- Breadcrumb Bar: Pojok Kanan Atas Mandiri -->
+<div class="content-breadcrumb-bar">
+    <div class="breadcrumb-nav" id="pageBreadcrumb">
+        <span class="breadcrumb-current">Kelola Mitra</span>
+        <span class="breadcrumb-separator">/</span>
+    </div>
+</div>
+
+<!-- Action Bar: Tombol di bawah Breadcrumb -->
+<div class="content-action-bar">
+    <button type="button" class="btn-primary-admin" onclick="openCreateModal()">
+        <i class="fas fa-plus"></i> Daftarkan Mitra Baru
+    </button>
+</div>
+
+<div class="admin-card">
+    <div class="table-responsive p-3">
+        <table class="table table-hover align-middle w-100" id="tableFoundations">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 50px; text-align:center;">NO</th>
+                    <th>NAMA MITRA</th>
+                    <th style="width: 170px;">TIPE MODEL MITRA</th>
+                    <th>WEBSITE RESMI</th>
+                    <th>LEGALITAS (SK / IZIN USAHA)</th>
+                    <th>ADMIN PENGELOLA (PIC)</th>
+                    <th>REKENING BANK</th>
+                    <th>KONTAK WA</th>
+                    <th>STATUS</th>
+                    <th style="text-align: right; width: 170px;">AKSI</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Tambah Mitra (Superadmin mendaftarkan entitas mitra baru) -->
+<div class="admin-modal-backdrop" id="modalCreate">
+    <div class="admin-modal-card modal-md">
+        <div class="admin-modal-head">
+            <h4 class="admin-modal-title"><i class="fas fa-handshake text-teal me-2"></i>Daftarkan Mitra Baru</h4>
+            <button type="button" class="btn-modal-close" onclick="AdminModal.close('modalCreate')">&times;</button>
+        </div>
+        <form id="formCreate" onsubmit="event.preventDefault(); submitCreate();">
+            <div class="admin-modal-content">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="form-field-group">
+                            <label class="form-field-label">Nama Mitra / Organisasi <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="cName" class="form-field-input" placeholder="Contoh: Mitra Sejahtera Abadi" oninput="handleSlugAutoFill(this, '#cSlug')" required />
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-field-group">
+                            <label class="form-field-label">Tipe Model Mitra / Solusi <span style="color:#ef4444;">*</span></label>
+                            <select id="cFoundationTypeId" class="form-field-input" required>
+                                <option value="">-- Pilih Tipe Model Mitra --</option>
+                            </select>
+                            <small class="text-muted" style="font-size:11px;">Menentukan model bisnis & modul fitur navigasi yang aktif (cth: Yayasan Donasi, POS, Company Profile).</small>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-field-group">
+                            <label class="form-field-label">Slug URL Web Publik <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="cSlug" class="form-field-input" placeholder="mitra-sejahtera" required />
+                            <small class="text-muted" style="font-size:11px;">Digunakan sebagai identitas path (/mitra-sejahtera).</small>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-field-group">
+                            <label class="form-field-label">Izin Legalitas / SK / Nomor Izin Usaha <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="cPermit" class="form-field-input" placeholder="Contoh: AHU-0012345.AH.01.04.Tahun 2024 / NIB-123456" required />
+                            <small class="text-muted" style="font-size:11px;">Nomor SK resmi, NIB, atau identitas perizinan entitas mitra.</small>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="p-3 rounded-3" style="background:#f0fdfa; border: 1px solid #ccfbf1;">
+                            <small class="text-muted d-block" style="font-size:12px; color:#0f766e !important; line-height:1.4;">
+                                <i class="fas fa-info-circle me-1"></i> Data rekening bank penyaluran, kontak WhatsApp, profil, dan alamat kantor akan dilengkapi secara mandiri oleh pihak pengelola mitra (PIC) melalui portal mandiri mitra.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="admin-modal-foot">
+                <button type="button" class="btn-secondary-admin" onclick="AdminModal.close('modalCreate')">Batal</button>
+                <button type="submit" class="btn-primary-admin" id="btnSaveCreate">
+                    <i class="fas fa-plus me-1"></i> Daftarkan Mitra
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Edit Mitra (Superadmin mengedit data legalitas mitra) -->
+<div class="admin-modal-backdrop" id="modalEdit">
+    <div class="admin-modal-card modal-md">
+        <div class="admin-modal-head">
+            <h4 class="admin-modal-title"><i class="fas fa-pen text-teal me-2"></i>Edit Data Legalitas Mitra</h4>
+            <button type="button" class="btn-modal-close" onclick="AdminModal.close('modalEdit')">&times;</button>
+        </div>
+        <form id="formEdit" onsubmit="event.preventDefault(); submitEdit();">
+            <input type="hidden" id="editId" />
+            <div class="admin-modal-content">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="form-field-group">
+                            <label class="form-field-label">Nama Mitra / Organisasi <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="eName" class="form-field-input" required />
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-field-group">
+                            <label class="form-field-label">Tipe Model Mitra / Solusi <span style="color:#ef4444;">*</span></label>
+                            <select id="eFoundationTypeId" class="form-field-input" required>
+                                <option value="">-- Pilih Tipe Model Mitra --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-field-group">
+                            <label class="form-field-label">Slug URL Web Publik <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="eSlug" class="form-field-input" required />
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-field-group">
+                            <label class="form-field-label">Izin Legalitas / SK / Nomor Izin Usaha <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="ePermit" class="form-field-input" required />
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.85rem; font-weight:600;">
+                            <input type="checkbox" id="eActive" style="width:16px; height:16px;" checked />
+                            <span>Status Mitra Aktif Beroperasi</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="admin-modal-foot">
+                <button type="button" class="btn-secondary-admin" onclick="AdminModal.close('modalEdit')">Batal</button>
+                <button type="submit" class="btn-primary-admin" id="btnSaveEdit">
+                    <i class="fas fa-save me-1"></i> Simpan Perubahan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Kelola Admin Pengelola (PIC) -->
+<div class="admin-modal-backdrop" id="modalPic">
+    <div class="admin-modal-card modal-md">
+        <div class="admin-modal-head">
+            <div>
+                <h4 class="admin-modal-title"><i class="fas fa-users-gear text-teal me-2"></i>Kelola PIC Mitra</h4>
+                <div class="text-muted small" id="picModalFoundationName" style="font-size:12px; margin-top:2px;"></div>
+            </div>
+            <button type="button" class="btn-modal-close" onclick="AdminModal.close('modalPic')">&times;</button>
+        </div>
+        <form id="formPic" onsubmit="event.preventDefault(); submitPic();">
+            <input type="hidden" id="picFoundationId" />
+            <div class="admin-modal-content">
+                <div class="form-field-group mb-0">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label class="form-field-label mb-0">Pilih Admin Pengelola (PIC) <span style="color:#ef4444;">*</span></label>
+                        <span class="badge bg-light text-muted border" id="mPicCount" style="font-size:11px;">0 Pengguna Terpilih</span>
+                    </div>
+                    <div class="pic-selector-container">
+                        <div class="pic-search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="mPicSearch" class="pic-search-input" placeholder="Cari nama atau email pengguna..." oninput="filterUserList(this, '#mPicList')" />
+                        </div>
+                        <div class="d-flex flex-wrap mb-2" id="mPicBadges" style="display:none;"></div>
+                        <div class="pic-list-scroll" id="mPicList">
+                            <!-- Daftar user disuntikkan via jQuery -->
+                        </div>
+                    </div>
+                    <small class="text-muted d-block mt-2" style="font-size:11px;">
+                        <i class="fas fa-info-circle text-teal me-1"></i> Pengguna yang dipilih akan memiliki akses pengelolaan untuk mitra ini.
+                    </small>
+                </div>
+            </div>
+            <div class="admin-modal-foot">
+                <button type="button" class="btn-secondary-admin" onclick="AdminModal.close('modalPic')">Batal</button>
+                <button type="submit" class="btn-primary-admin" id="btnSavePic"><i class="fas fa-save me-1"></i> Simpan PIC</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    var fndDataTable = null;
+    var allFoundations = [];
+    var cachedUsers = [];
+
+    function renderFoundationsTable(data) {
+        if ($.fn.DataTable.isDataTable('#tableFoundations')) {
+            $('#tableFoundations').DataTable().destroy();
+        }
+
+        fndDataTable = $('#tableFoundations').DataTable({
+            data: data,
+            columns: [
+                {
+                    data: null,
+                    orderable: false,
+                    className: "text-muted",
+                    render: function (data, type, row, meta) {
+                        return meta.row + 1;
+                    }
+                },
+                {
+                    data: 'name',
+                    render: function (data, type, row) {
+                        return `<strong style="color:#0f172a; font-weight:600;">${escHtml(data)}</strong>`;
+                    }
+                },
+                {
+                    data: 'foundationTypeName',
+                    className: "align-middle",
+                    render: function (data) {
+                        var name = data || 'Foundation Yayasan Donasi';
+                        return `<span class="badge" style="background:#ccfbf1; color:#0f766e; border:1px solid #99f6e4; font-size:12px; font-weight:600; padding:4px 8px;"><i class="fas fa-shapes me-1"></i>${escHtml(name)}</span>`;
+                    }
+                },
+                {
+                    data: 'slug',
+                    render: function (data, type, row) {
+                        var targetSlug = data || (row.name ? row.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'mitra');
+                        var targetUrl = 'http://localhost:9007/' + encodeURIComponent(targetSlug);
+                        return `
+                            <a href="${targetUrl}" target="_blank" class="website-resmi-badge shadow-sm" title="Kunjungi Website Resmi ${escHtml(row.name || '')}">
+                                <i class="fas fa-globe me-1"></i>/${escHtml(targetSlug)}
+                            </a>
+                        `;
+                    }
+                },
+                {
+                    data: 'legalPermitNumber',
+                    render: function (data) {
+                        return data 
+                            ? `<span class="badge bg-light text-dark border px-2 py-1" style="font-size:11.5px; font-weight:500;"><i class="fas fa-certificate text-teal me-1"></i>${escHtml(data)}</span>`
+                            : '<span class="text-muted small">-</span>';
+                    }
+                },
+                {
+                    data: 'foundationUsers',
+                    render: function (data, type, row) {
+                        var adminList = [];
+                        if (Array.isArray(data) && data.length > 0) {
+                            data.forEach(function (fu) {
+                                if (fu.user && fu.user.name) {
+                                    adminList.push(fu.user.name);
+                                }
+                            });
+                        }
+                        if (adminList.length === 0 && row.user && row.user.name) {
+                            adminList.push(row.user.name);
+                        }
+                        if (adminList.length === 0 && row.userName) {
+                            adminList.push(row.userName);
+                        }
+
+                        if (adminList.length > 0) {
+                            return adminList.map(function (name) {
+                                return `<span class="status-pill pill-role d-inline-flex align-items-center mb-1 me-1"><i class="fas fa-user-shield me-1"></i>${escHtml(name)}</span>`;
+                            }).join('');
+                        }
+                        return '<span style="color:#94a3b8; font-size:12px;">Belum ada PIC</span>';
+                    }
+                },
+                {
+                    data: 'bankName',
+                    render: function (data, type, row) {
+                        if (data) {
+                            return `
+                                <strong style="color:#0f172a;">${escHtml(data)}</strong>
+                                <small class="d-block" style="color:#64748b; font-size:11px;">${escHtml(row.bankAccountNumber || '-')} a.n ${escHtml(row.bankAccountHolder || '-')}</small>
+                            `;
+                        }
+                        return '<span class="badge bg-light text-muted border px-2 py-1" style="font-size:10.5px;"><i class="fas fa-clock me-1"></i>Belum Dilengkapi Mitra</span>';
+                    }
+                },
+                {
+                    data: 'whatsappNumber',
+                    render: function (data) {
+                        return data ? `<span class="code-tag">${escHtml(data)}</span>` : '<span style="color:#94a3b8;">-</span>';
+                    }
+                },
+                {
+                    data: 'isActive',
+                    render: function (data) {
+                        return data
+                            ? '<span class="status-pill pill-active"><span class="dot-indicator"></span>Aktif</span>'
+                            : '<span class="status-pill pill-inactive"><span class="dot-indicator"></span>Nonaktif</span>';
+                    }
+                },
+                {
+                    data: 'id',
+                    orderable: false,
+                    className: "text-end text-nowrap",
+                    render: function (data, type, row) {
+                        return `
+                            <button type="button" class="btn-table-action" style="color:#0f766e; border-color:#ccfbf1; background:#f0fdfa;" onclick="openPicModal(${data})">
+                                <i class="fas fa-users-gear"></i> PIC
+                            </button>
+                            <button type="button" class="btn-table-action btn-table-edit" onclick="openEdit(${data})">
+                                <i class="fas fa-pen"></i> Edit
+                            </button>
+                            <button type="button" class="btn-table-action btn-table-del" onclick="delFoundation(${data}, '${escHtml(row.name)}')">
+                                <i class="fas fa-trash"></i> Hapus
+                            </button>
+                        `;
+                    }
+                }
+            ]
+        });
+    }
+
+    function loadFoundations() {
+        $.ajax({
+            url: API_BASE_URL + '/foundations',
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                allFoundations = data || [];
+                renderFoundationsTable(allFoundations);
+            },
+            error: function (xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Gagal mengambil data mitra';
+                AdminToast.error(msg);
+                renderFoundationsTable([]);
+            }
+        });
+    }
+
+    function loadAllUsers(callback) {
+        $.ajax({
+            url: API_BASE_URL + '/users',
+            type: 'GET',
+            dataType: 'json',
+            success: function (users) {
+                cachedUsers = users || [];
+                if (callback) callback();
+            },
+            error: function () {
+                AdminToast.error('Gagal mengambil daftar pengguna');
+            }
+        });
+    }
+
+    function renderUserCheckboxList(containerId, selectedUserIds, badgesContainerId, counterId) {
+        var $container = $(containerId).empty();
+        selectedUserIds = selectedUserIds || [];
+
+        if (!cachedUsers || cachedUsers.length === 0) {
+            $container.html('<div class="p-2 text-muted small text-center">Tidak ada user tersedia.</div>');
+            return;
+        }
+
+        cachedUsers.forEach(function (u) {
+            var isChecked = selectedUserIds.indexOf(u.id) !== -1;
+            var initial = (u.name || 'U').charAt(0).toUpperCase();
+            var checkedAttr = isChecked ? 'checked' : '';
+            
+            var itemHtml = `
+                <label class="pic-item-label" data-search="${(u.name + ' ' + u.email).toLowerCase()}">
+                    <input type="checkbox" value="${u.id}" ${checkedAttr} onchange="updateSelectedBadges('${containerId}', '${badgesContainerId}', '${counterId}')" />
+                    <div class="pic-user-avatar">${initial}</div>
+                    <div class="pic-user-info">
+                        <span class="pic-user-name">${escHtml(u.name)}</span>
+                        <span class="pic-user-email">${escHtml(u.email)}</span>
+                    </div>
+                </label>
+            `;
+            $container.append(itemHtml);
+        });
+
+        updateSelectedBadges(containerId, badgesContainerId, counterId);
+    }
+
+    function updateSelectedBadges(containerId, badgesContainerId, counterId) {
+        var $badges = $(badgesContainerId).empty();
+        var count = 0;
+
+        $(containerId + ' input[type="checkbox"]:checked').each(function () {
+            var uid = parseInt($(this).val());
+            var user = cachedUsers.find(function (u) { return u.id === uid; });
+            if (user) {
+                count++;
+                var badgeHtml = `
+                    <span class="pic-selected-badge">
+                        <i class="fas fa-user-check"></i> ${escHtml(user.name)}
+                        <span class="pic-badge-remove" onclick="uncheckUser('${containerId}', ${user.id}, '${badgesContainerId}', '${counterId}')" title="Hapus pilihan">&times;</span>
+                    </span>
+                `;
+                $badges.append(badgeHtml);
+            }
+        });
+
+        if (count > 0) {
+            $badges.show();
+            $(counterId).text(count + ' Pengguna Terpilih').removeClass('bg-light text-muted').addClass('bg-teal bg-opacity-10 text-teal fw-bold');
+        } else {
+            $badges.hide();
+            $(counterId).text('0 Pengguna Terpilih').removeClass('bg-teal bg-opacity-10 text-teal fw-bold').addClass('bg-light text-muted');
+        }
+    }
+
+    window.uncheckUser = function (containerId, userId, badgesContainerId, counterId) {
+        $(containerId + ' input[type="checkbox"][value="' + userId + '"]').prop('checked', false);
+        updateSelectedBadges(containerId, badgesContainerId, counterId);
+    };
+
+    window.filterUserList = function (inputElem, listContainerId) {
+        var q = $(inputElem).val().toLowerCase().trim();
+        $(listContainerId + ' .pic-item-label').each(function () {
+            var text = $(this).attr('data-search') || '';
+            if (text.indexOf(q) !== -1) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    };
+
+    function handleSlugAutoFill(inputElem, targetSelector) {
+        var slug = $(inputElem).val().toLowerCase()
+            .replace(/[^\w\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/--+/g, '-');
+        $(targetSelector).val(slug);
+    }
+
+    function openCreateModal() {
+        $('#formCreate')[0].reset();
+        $('#cFoundationTypeId').val('');
+        AdminModal.open('modalCreate');
+    }
+
+    function submitCreate() {
+        var ftVal = $('#cFoundationTypeId').val();
+        var payload = {
+            name: $('#cName').val().trim(),
+            slug: $('#cSlug').val().trim(),
+            foundationTypeId: ftVal ? parseInt(ftVal) : null,
+            legalPermitNumber: $('#cPermit').val().trim()
+        };
+
+        $('#btnSaveCreate').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Mendaftarkan...');
+
+        $.ajax({
+            url: API_BASE_URL + '/foundations',
+            type: 'POST',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function () {
+                $('#btnSaveCreate').prop('disabled', false).html('<i class="fas fa-plus me-1"></i> Daftarkan Mitra');
+                AdminModal.close('modalCreate');
+                AdminToast.success('Mitra baru berhasil didaftarkan');
+                loadFoundations();
+            },
+            error: function (xhr) {
+                $('#btnSaveCreate').prop('disabled', false).html('<i class="fas fa-plus me-1"></i> Daftarkan Mitra');
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Gagal mendaftarkan mitra';
+                AdminToast.error(msg);
+            }
+        });
+    }
+
+    window.openEdit = function (id) {
+        var f = allFoundations.find(function (x) { return x.id === id; });
+        if (!f) return;
+
+        $('#editId').val(f.id);
+        $('#eName').val(f.name);
+        $('#eSlug').val(f.slug);
+        $('#eFoundationTypeId').val(f.foundationTypeId || '');
+        $('#ePermit').val(f.legalPermitNumber || '');
+        $('#eActive').prop('checked', f.isActive);
+
+        AdminModal.open('modalEdit');
+    };
+
+    function submitEdit() {
+        var id = parseInt($('#editId').val());
+        var ftVal = $('#eFoundationTypeId').val();
+
+        var payload = {
+            id: id,
+            name: $('#eName').val().trim(),
+            slug: $('#eSlug').val().trim(),
+            foundationTypeId: ftVal ? parseInt(ftVal) : null,
+            legalPermitNumber: $('#ePermit').val().trim(),
+            isActive: $('#eActive').is(':checked')
+        };
+
+        $('#btnSaveEdit').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Menyimpan...');
+
+        $.ajax({
+            url: API_BASE_URL + '/foundations/' + id,
+            type: 'PUT',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function () {
+                $('#btnSaveEdit').prop('disabled', false).html('<i class="fas fa-save me-1"></i> Simpan Perubahan');
+                AdminModal.close('modalEdit');
+                AdminToast.success('Data legalitas mitra berhasil diperbarui');
+                loadFoundations();
+            },
+            error: function (xhr) {
+                $('#btnSaveEdit').prop('disabled', false).html('<i class="fas fa-save me-1"></i> Simpan Perubahan');
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Gagal memperbarui mitra';
+                AdminToast.error(msg);
+            }
+        });
+    }
+
+    // Dedicated PIC Management Modal
+    window.openPicModal = function (foundationId) {
+        var f = allFoundations.find(function (x) { return x.id === foundationId; });
+        if (!f) return;
+
+        var selectedIds = [];
+        if (f.foundationUsers && Array.isArray(f.foundationUsers)) {
+            f.foundationUsers.forEach(function (fu) {
+                if (fu.userId) selectedIds.push(fu.userId);
+            });
+        } else if (f.userId) {
+            selectedIds.push(f.userId);
+        }
+
+        var initModal = function () {
+            $('#picFoundationId').val(f.id);
+            $('#picModalFoundationName').text(f.name + ' (' + (f.slug || '') + ')');
+            $('#mPicSearch').val('');
+            renderUserCheckboxList('#mPicList', selectedIds, '#mPicBadges', '#mPicCount');
+            AdminModal.open('modalPic');
+        };
+
+        if (cachedUsers.length === 0) {
+            loadAllUsers(initModal);
+        } else {
+            initModal();
+        }
+    };
+
+    function submitPic() {
+        var foundationId = parseInt($('#picFoundationId').val());
+        var selectedUserIds = [];
+        $('#mPicList input[type="checkbox"]:checked').each(function () {
+            selectedUserIds.push(parseInt($(this).val()));
+        });
+
+        if (selectedUserIds.length === 0) {
+            AdminToast.error('Pilih minimal satu Admin Pengelola (PIC)');
+            return;
+        }
+
+        $('#btnSavePic').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Menyimpan...');
+
+        $.ajax({
+            url: API_BASE_URL + '/foundations/' + foundationId + '/users',
+            type: 'PUT',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify(selectedUserIds),
+            success: function (res) {
+                $('#btnSavePic').prop('disabled', false).html('<i class="fas fa-save me-1"></i> Simpan PIC');
+                AdminModal.close('modalPic');
+                AdminToast.success(res.message || 'Admin Pengelola (PIC) berhasil diperbarui');
+                loadFoundations();
+            },
+            error: function (xhr) {
+                $('#btnSavePic').prop('disabled', false).html('<i class="fas fa-save me-1"></i> Simpan PIC');
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Gagal memperbarui Admin Pengelola';
+                AdminToast.error(msg);
+            }
+        });
+    }
+
+    window.delFoundation = function (id, name) {
+        if (confirm('Apakah Anda yakin ingin menghapus data mitra "' + name + '"?')) {
+            $.ajax({
+                url: API_BASE_URL + '/foundations/' + id,
+                type: 'DELETE',
+                dataType: 'json',
+                success: function () {
+                    AdminToast.success('Data mitra berhasil dihapus');
+                    loadFoundations();
+                },
+                error: function (xhr) {
+                    var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Gagal menghapus data mitra';
+                    AdminToast.error(msg);
+                }
+            });
+        }
+    };
+
+    function loadFoundationTypes() {
+        $.ajax({
+            url: API_BASE_URL + '/FoundationTypes',
+            type: 'GET',
+            headers: (typeof API_CONFIG !== 'undefined' && API_CONFIG.getHeaders) ? API_CONFIG.getHeaders() : {},
+            success: function (res) {
+                var types = Array.isArray(res) ? res : (res.data || []);
+                var opts = '<option value="">-- Pilih Tipe Model Mitra --</option>';
+                types.forEach(function (t) {
+                    opts += `<option value="${t.id}">${escHtml(t.name)}</option>`;
+                });
+                $('#cFoundationTypeId').html(opts);
+                $('#eFoundationTypeId').html(opts);
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        loadAllUsers();
+        loadFoundations();
+        loadFoundationTypes();
+    });
+</script>
+}

@@ -1,0 +1,394 @@
+@{
+    Layout = "_PublicLayout";
+    var slug = (ViewData["Slug"] as string) ?? "";
+    var domain = (ViewData["Domain"] as string) ?? "";
+    var tenant = (ViewData["Tenant"] as string) ?? (!string.IsNullOrEmpty(slug) ? slug : domain);
+    var foundationName = (ViewData["FoundationName"] as string) ?? "Yayasan";
+    ViewData["Title"] = $"Kabar & Berita - {foundationName}";
+}
+
+<style>
+    /* Hero Header */
+    .news-hero {
+        background: linear-gradient(135deg, #0f766e 0%, #115e59 50%, #042f2e 100%);
+        color: #ffffff;
+        padding: 4.5rem 0 3.5rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    .news-hero::before {
+        content: '';
+        position: absolute;
+        top: -40%;
+        right: -15%;
+        width: 500px;
+        height: 500px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(45,212,191,0.18) 0%, rgba(255,255,255,0) 70%);
+        pointer-events: none;
+    }
+
+    .badge-verified-hero {
+        background: rgba(45, 212, 191, 0.15);
+        color: #2dd4bf;
+        border: 1px solid rgba(45, 212, 191, 0.35);
+        border-radius: 50rem;
+        padding: 0.35rem 1rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    /* Filter Controls */
+    .news-filter-card {
+        background: #ffffff;
+        border-radius: 1rem;
+        border: 1px solid #e2e8f0;
+        padding: 1.25rem 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
+        margin-top: -2rem;
+        position: relative;
+        z-index: 10;
+    }
+
+    .search-input-group {
+        position: relative;
+    }
+    .search-input-group i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+    }
+    .search-input-group input {
+        padding-left: 2.75rem;
+        border-radius: 0.75rem;
+        border: 1px solid #cbd5e1;
+        font-size: 0.95rem;
+        height: 48px;
+    }
+    .search-input-group input:focus {
+        border-color: #0d9488;
+        box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+    }
+
+    /* Category Badges / Filter Pills */
+    .filter-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1.15rem;
+        background: #f1f5f9;
+        color: #475569;
+        border-radius: 50rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+        cursor: pointer;
+        user-select: none;
+    }
+    .filter-pill:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+    .filter-pill.active {
+        background: #0f766e;
+        color: #ffffff;
+        box-shadow: 0 2px 4px rgba(15, 118, 110, 0.25);
+    }
+
+    /* News Card */
+    .news-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 1.25rem;
+        overflow: hidden;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    .news-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.08);
+        border-color: #cbd5e1;
+    }
+    .news-img-box {
+        position: relative;
+        height: 200px;
+        background: #f8fafc;
+        overflow: hidden;
+    }
+    .news-img-box img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    .news-card:hover .news-img-box img {
+        transform: scale(1.05);
+    }
+    .news-badge {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        background: rgba(15, 118, 110, 0.9);
+        color: #ffffff;
+        backdrop-filter: blur(4px);
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.3rem 0.75rem;
+        border-radius: 50rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .news-body {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+    }
+    .news-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #1e293b;
+        line-height: 1.4;
+        margin-bottom: 0.75rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-decoration: none;
+    }
+    .news-title:hover {
+        color: #0f766e;
+    }
+    .news-desc {
+        color: #64748b;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin-bottom: 1.25rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        flex-grow: 1;
+    }
+    .news-meta {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 0.85rem;
+        border-top: 1px solid #f1f5f9;
+    }
+</style>
+
+<!-- Hero Section -->
+<section class="news-hero">
+    <div class="container text-center">
+        <div class="badge-verified-hero mb-3">
+            <i class="fas fa-newspaper"></i>
+            <span>Pemberitaan Resmi Yayasan</span>
+        </div>
+        <h1 class="fw-bold mb-3 fs-2 text-white">Kabar & Berita Terbaru</h1>
+        <p class="text-white-50 mx-auto fs-6 mb-0" style="max-width: 650px;">
+            Informasi terkini mengenai aktivitas penyaluran bantuan, agenda kegiatan kemanusiaan, dan kisah inspiratif bersama @foundationName.
+        </p>
+    </div>
+</section>
+
+<!-- Filter & Search Section -->
+<div class="container">
+    <div class="news-filter-card">
+        <div class="row g-3 align-items-center">
+            <!-- Search Bar -->
+            <div class="col-lg-5 col-md-6">
+                <div class="search-input-group">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="newsSearchInput" class="form-control" placeholder="Cari judul berita atau kabar...">
+                </div>
+            </div>
+
+            <!-- Categories / Filter Pills -->
+            <div class="col-lg-7 col-md-6">
+                <div class="d-flex flex-wrap gap-2 justify-content-md-end" id="categoryPills">
+                    <button type="button" class="filter-pill active" data-category="ALL">Semua</button>
+                    <button type="button" class="filter-pill" data-category="BERITA">Kabar Berita</button>
+                    <button type="button" class="filter-pill" data-category="PENYALURAN">Penyaluran</button>
+                    <button type="button" class="filter-pill" data-category="INSPIRASI">Inspirasi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Grid -->
+<section class="py-5 bg-light-subtle">
+    <div class="container">
+        <!-- Loading State -->
+        <div id="loadingNews" class="text-center py-5">
+            <div class="spinner-border text-teal" role="status" style="color: #0f766e;"></div>
+            <p class="text-muted mt-2 small">Memuat berita dan artikel...</p>
+        </div>
+
+        <!-- News Grid -->
+        <div class="row g-4" id="newsGrid" style="display: none;"></div>
+
+        <!-- Empty State -->
+        <div id="emptyNews" class="text-center py-5" style="display: none;">
+            <div class="rounded-circle bg-white shadow-sm d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                <i class="fas fa-newspaper fa-2x text-muted"></i>
+            </div>
+            <h5 class="fw-bold text-dark">Belum Ada Berita</h5>
+            <p class="text-muted small">Saat ini belum ada publikasi berita atau artikel pada kategori ini.</p>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+<script>
+    var currentCategory = 'ALL';
+    var allNewsData = [];
+
+    function getParam(name) {
+        var urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '-';
+        try {
+            var d = new Date(dateStr);
+            return d.toLocaleDateString('id-ID', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            });
+        } catch(e) {
+            return dateStr;
+        }
+    }
+
+    function stripHtml(html) {
+        var tmp = document.createElement("DIV");
+        tmp.innerHTML = html || '';
+        return tmp.textContent || tmp.innerText || "";
+    }
+
+    function renderGrid() {
+        var q = ($('#newsSearchInput').val() || '').toLowerCase().trim();
+        var filtered = allNewsData.filter(function(item) {
+            var matchCat = true;
+            if (currentCategory !== 'ALL') {
+                var itemCat = (item.category || '').toUpperCase();
+                matchCat = (itemCat === currentCategory || itemCat.indexOf(currentCategory) !== -1);
+            }
+
+            var matchSearch = true;
+            if (q) {
+                var title = (item.title || '').toLowerCase();
+                var excerpt = (item.excerpt || '').toLowerCase();
+                var content = stripHtml(item.content || '').toLowerCase();
+                matchSearch = title.includes(q) || excerpt.includes(q) || content.includes(q);
+            }
+
+            return matchCat && matchSearch;
+        });
+
+        if (filtered.length === 0) {
+            $('#newsGrid').hide().empty();
+            $('#emptyNews').show();
+            return;
+        }
+
+        $('#emptyNews').hide();
+        var html = '';
+
+        filtered.forEach(function(item) {
+            var thumb = item.thumbnailUrl || '/images/no-image.png';
+            var title = item.title || 'Untitled';
+            var slug = item.slug || item.id;
+            var excerpt = item.excerpt || stripHtml(item.content || '').substring(0, 140) + '...';
+            var cat = (item.category || 'Berita').replace('_', ' ').toUpperCase();
+            var date = formatDate(item.publishedAt || item.createdAt);
+            var views = item.views || item.viewCount || 0;
+            var detailUrl = '/News/' + encodeURIComponent(slug);
+
+            html += `
+                <div class="col-lg-4 col-md-6">
+                    <div class="news-card">
+                        <div class="news-img-box">
+                            <img src="${thumb}" alt="${title}" onerror="this.src='/images/no-image.png'">
+                            <span class="news-badge">${cat}</span>
+                        </div>
+                        <div class="news-body">
+                            <a href="${detailUrl}" class="news-title" title="${title}">${title}</a>
+                            <p class="news-desc">${excerpt}</p>
+                            <div class="news-meta">
+                                <span><i class="far fa-calendar-alt me-1"></i>${date}</span>
+                                <span><i class="far fa-eye me-1"></i>${views} dibaca</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        $('#newsGrid').html(html).show();
+    }
+
+    $(document).ready(function() {
+        var initialQ = getParam('q');
+        var initialCat = getParam('cat');
+
+        if (initialQ) {
+            $('#newsSearchInput').val(initialQ);
+        }
+        if (initialCat) {
+            currentCategory = initialCat.toUpperCase();
+            $('#categoryPills .filter-pill').removeClass('active');
+            $('#categoryPills .filter-pill[data-category="' + currentCategory + '"]').addClass('active');
+        }
+
+        var fId = window.CURRENT_FOUNDATION_ID || 2;
+        var apiUrl = API_BASE_URL + '/newsposts/foundation/' + fId;
+
+        $.ajax({
+            url: apiUrl,
+            type: 'GET',
+            dataType: 'json',
+            success: function(res) {
+                $('#loadingNews').hide();
+                allNewsData = (res || []).filter(function(x) { 
+                    return x.isPublished !== false && x.isActive !== false; 
+                });
+                renderGrid();
+            },
+            error: function() {
+                $('#loadingNews').hide();
+                $('#emptyNews').show();
+            }
+        });
+
+        // Search listener
+        $('#newsSearchInput').on('input', function() {
+            renderGrid();
+        });
+
+        // Category click listener
+        $('#categoryPills').on('click', '.filter-pill', function() {
+            $('#categoryPills .filter-pill').removeClass('active');
+            $(this).addClass('active');
+            currentCategory = $(this).data('category');
+            renderGrid();
+        });
+    });
+</script>
+}

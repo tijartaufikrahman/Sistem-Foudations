@@ -1,0 +1,191 @@
+is_global = true
+build_property.TargetFramework = net8.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = SaasBringtimeSolution
+build_property.RootNamespace = SaasBringtimeSolution
+build_property.ProjectDir = C:\Programing\Project 7\FE\SaasBringtimeSolution\SaasBringtimeSolution\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 8.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = C:\Programing\Project 7\FE\SaasBringtimeSolution\SaasBringtimeSolution
+build_property._RazorSourceGeneratorDebug = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Admin/Dashboard.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cRGFzaGJvYXJkLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Admin/FoundationNavbars.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cRm91bmRhdGlvbk5hdmJhcnMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Admin/Foundations.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cRm91bmRhdGlvbnMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Admin/FoundationTypes.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cRm91bmRhdGlvblR5cGVzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Admin/Groups.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cR3JvdXBzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Admin/MenuRoles.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cTWVudVJvbGVzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Admin/Menus.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cTWVudXMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Admin/NavbarGroups.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cTmF2YmFyR3JvdXBzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Admin/Navbars.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cTmF2YmFycy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Admin/Roles.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cUm9sZXMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Admin/UserRoles.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cVXNlclJvbGVzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Admin/Users.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cVXNlcnMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Auth/ForgotPassword.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXV0aFxGb3Jnb3RQYXNzd29yZC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Auth/ForgotPasswordConfirmation.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXV0aFxGb3Jnb3RQYXNzd29yZENvbmZpcm1hdGlvbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Auth/Login.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXV0aFxMb2dpbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Auth/ResetPassword.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXV0aFxSZXNldFBhc3N3b3JkLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Auth/VerifyOtp.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXV0aFxWZXJpZnlPdHAuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Donor/Dashboard.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRG9ub3JcRGFzaGJvYXJkLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Donor/History.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRG9ub3JcSGlzdG9yeS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Donor/Profile.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRG9ub3JcUHJvZmlsZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Foundation/Campaigns.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRm91bmRhdGlvblxDYW1wYWlnbnMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Foundation/Dashboard.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRm91bmRhdGlvblxEYXNoYm9hcmQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Foundation/Donations.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRm91bmRhdGlvblxEb25hdGlvbnMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Foundation/dummy.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRm91bmRhdGlvblxkdW1teS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Foundation/NewsPosts.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRm91bmRhdGlvblxOZXdzUG9zdHMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Foundation/Settings.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRm91bmRhdGlvblxTZXR0aW5ncy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Home/CampaignDetail.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxDYW1wYWlnbkRldGFpbC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Home/Campaigns.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxDYW1wYWlnbnMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Home/Donate.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxEb25hdGUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Home/Faq.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxGYXEuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Home/News.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxOZXdzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Home/NewsDetail.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxOZXdzRGV0YWlsLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Home/PaymentStatus.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQYXltZW50U3RhdHVzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Home/Prayers.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQcmF5ZXJzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Home/Profile.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQcm9maWxlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Shared/Error.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXEVycm9yLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Shared/NotFound.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXE5vdEZvdW5kLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Shared/_PublicLayout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9QdWJsaWNMYXlvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Shared/_ValidationScriptsPartial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/_ViewStart.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdTdGFydC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Programing/Project 7/FE/SaasBringtimeSolution/SaasBringtimeSolution/Views/Shared/_Layout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = b-ha95p2nk8s

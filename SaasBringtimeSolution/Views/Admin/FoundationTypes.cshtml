@@ -1,0 +1,444 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Master Type Mitra - (Master)";
+}
+
+<style>
+    /* Scoped styling for Foundation Types Master */
+    .badge-stat-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f1f5f9;
+        color: #0f766e;
+        border: 1px solid #cbd5e1;
+        border-radius: 999px;
+        padding: 2px 10px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap !important;
+    }
+    #tableFoundationTypes th.text-wrap,
+    #tableFoundationTypes td.text-wrap {
+        white-space: nowrap !important;
+        vertical-align: middle !important;
+    }
+    #tableFoundationTypes .badge-stat-pill.text-wrap {
+        white-space: nowrap !important;
+        display: inline-flex !important;
+        align-items: center !important;
+    }
+    .code-badge {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 2px 8px;
+        font-size: 12px;
+        color: #0369a1;
+        font-weight: 600;
+    }
+</style>
+
+<!-- Outermost View Wrapper adhering to aturan_styling.txt -->
+<div class="row">
+    <div class="col-12">
+
+        <!-- Breadcrumb Bar: Pojok Kanan Atas Mandiri -->
+        <div class="content-breadcrumb-bar">
+            <div class="breadcrumb-nav" id="pageBreadcrumb">
+                <span class="breadcrumb-current">Master Type Mitra - (Master)</span>
+                <span class="breadcrumb-separator">/</span>
+            </div>
+        </div>
+
+        <!-- Action Bar: Tombol di bawah Breadcrumb -->
+        <div class="content-action-bar">
+            <button type="button" class="btn-primary-admin" onclick="openCreateModal()">
+                <i class="fas fa-plus"></i> Tambah Master Type Baru
+            </button>
+        </div>
+
+        <div class="admin-card">
+            <div class="table-responsive p-3">
+                <table class="table table-hover align-middle w-100" id="tableFoundationTypes">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 50px; text-align:center;">NO</th>
+                            <th>NAMA TIPE MITRA</th>
+                            <th style="width: 170px;">KODE SISTEM</th>
+                            <th>DESKRIPSI & SPESIFIKASI</th>
+                            <th style="width: 120px; text-align:center;" class="text-wrap text-nowrap">TOTAL MITRA</th>
+                            <th style="width: 120px; text-align:center;" class="text-wrap text-nowrap">TOTAL MENU</th>
+                            <th style="width: 100px; text-align:center;">STATUS</th>
+                            <th style="text-align: right; width: 140px;">AKSI</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modal Tambah Tipe Mitra -->
+        <div class="admin-modal-backdrop" id="modalCreate">
+            <div class="admin-modal-card" style="max-width: 550px;">
+                <div class="admin-modal-head">
+                    <h4 class="admin-modal-title"><i class="fas fa-shapes text-teal me-2"></i>Tambah Tipe Model Mitra</h4>
+                    <button type="button" class="btn-modal-close" onclick="AdminModal.close('modalCreate')">&times;</button>
+                </div>
+                <form id="formCreate" onsubmit="event.preventDefault(); submitCreate();">
+                    <div class="admin-modal-content">
+                        <div class="form-field-group">
+                            <label class="form-field-label">Nama Tipe Mitra <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="cName" class="form-field-input" placeholder="Contoh: Foundation Yayasan Donasi, Foundation Point of Sale" required oninput="autoGenerateCode(this.value, '#cCode')" />
+                        </div>
+                        <div class="form-field-group">
+                            <label class="form-field-label">Kode Sistem Unik <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="cCode" class="form-field-input" placeholder="Contoh: yayasan_donasi, point_of_sale, profile_company" required />
+                            <small class="text-muted" style="font-size:11px;">Hanya huruf kecil, angka, dan garis bawah (_). Digunakan sebagai identifier modul sistem.</small>
+                        </div>
+                        <div class="form-field-group">
+                            <label class="form-field-label">Deskripsi & Peruntukan Solusi</label>
+                            <textarea id="cDescription" class="form-field-input" rows="3" placeholder="Jelaskan cakupan fitur, alur bisnis, atau spesifikasi tipe mitra ini..."></textarea>
+                        </div>
+                        <div class="form-field-group mt-2">
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.85rem; font-weight:600;">
+                                <input type="checkbox" id="cActive" style="width:16px; height:16px;" checked />
+                                <span>Status Tipe Aktif (Bisa dipilih saat daftar mitra & buat menu)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="admin-modal-foot">
+                        <button type="button" class="btn-secondary-admin" onclick="AdminModal.close('modalCreate')">Batal</button>
+                        <button type="submit" class="btn-primary-admin" id="btnSaveCreate">Simpan Tipe Mitra</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal Edit Tipe Mitra -->
+        <div class="admin-modal-backdrop" id="modalEdit">
+            <div class="admin-modal-card" style="max-width: 550px;">
+                <div class="admin-modal-head">
+                    <h4 class="admin-modal-title"><i class="fas fa-edit text-teal me-2"></i>Edit Tipe Model Mitra</h4>
+                    <button type="button" class="btn-modal-close" onclick="AdminModal.close('modalEdit')">&times;</button>
+                </div>
+                <form id="formEdit" onsubmit="event.preventDefault(); submitEdit();">
+                    <input type="hidden" id="eId" />
+                    <div class="admin-modal-content">
+                        <div class="form-field-group">
+                            <label class="form-field-label">Nama Tipe Mitra <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="eName" class="form-field-input" required />
+                        </div>
+                        <div class="form-field-group">
+                            <label class="form-field-label">Kode Sistem Unik <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="eCode" class="form-field-input" required />
+                        </div>
+                        <div class="form-field-group">
+                            <label class="form-field-label">Deskripsi & Peruntukan Solusi</label>
+                            <textarea id="eDescription" class="form-field-input" rows="3"></textarea>
+                        </div>
+                        <div class="form-field-group mt-2">
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.85rem; font-weight:600;">
+                                <input type="checkbox" id="eActive" style="width:16px; height:16px;" />
+                                <span>Status Tipe Aktif</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="admin-modal-foot">
+                        <button type="button" class="btn-secondary-admin" onclick="AdminModal.close('modalEdit')">Batal</button>
+                        <button type="submit" class="btn-primary-admin" id="btnSaveEdit">Simpan Perubahan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal Hapus Tipe Mitra -->
+        <div class="admin-modal-backdrop" id="modalDelete">
+            <div class="admin-modal-card" style="max-width: 440px;">
+                <div class="admin-modal-head">
+                    <h4 class="admin-modal-title text-danger"><i class="fas fa-trash-alt me-2"></i>Hapus Tipe Mitra</h4>
+                    <button type="button" class="btn-modal-close" onclick="AdminModal.close('modalDelete')">&times;</button>
+                </div>
+                <div class="admin-modal-content">
+                    <input type="hidden" id="dId" />
+                    <p style="font-size: 14px; color: #475569; margin: 0;">
+                        Apakah Anda yakin ingin menghapus tipe mitra <strong id="dName" class="text-dark"></strong>?
+                    </p>
+                    <small class="text-danger mt-2 d-block" style="font-size: 12px;">
+                        Catatan: Tipe mitra tidak dapat dihapus jika masih digunakan oleh entitas mitra aktif atau menu navigasi.
+                    </small>
+                </div>
+                <div class="admin-modal-foot">
+                    <button type="button" class="btn-secondary-admin" onclick="AdminModal.close('modalDelete')">Batal</button>
+                    <button type="button" class="btn-danger-admin" id="btnConfirmDelete" onclick="confirmDelete()">Ya, Hapus</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    var dataTable = null;
+    var allTypes = [];
+
+    function autoGenerateCode(val, targetSelector) {
+        if (!val) return;
+        var code = val.toLowerCase()
+            .replace(/foundation\s*/g, '')
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/^_+|_+$/g, '');
+        $(targetSelector).val(code);
+    }
+
+    $(document).ready(function () {
+        loadData();
+    });
+
+    function loadData() {
+        $.ajax({
+            url: API_BASE_URL + '/FoundationTypes',
+            type: 'GET',
+            dataType: 'json',
+            success: function (res) {
+                allTypes = Array.isArray(res) ? res : (res.data || []);
+                renderTable(allTypes);
+            },
+            error: function (xhr) {
+                AdminToast.error('Gagal memuat daftar tipe mitra platform: ' + (xhr.responseJSON?.message || 'Server error'));
+                renderTable([]);
+            }
+        });
+    }
+
+    function renderTable(data) {
+        if ($.fn.DataTable.isDataTable('#tableFoundationTypes')) {
+            dataTable.destroy();
+        }
+
+        dataTable = $('#tableFoundationTypes').DataTable({
+            data: data,
+            responsive: true,
+            language: {
+                search: "_INPUT_",
+                searchPlaceholder: "Cari tipe mitra...",
+                lengthMenu: "Tampilkan _MENU_ data",
+                info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ tipe",
+                infoEmpty: "Data tidak tersedia",
+                zeroRecords: "Tidak ada tipe mitra yang cocok",
+                paginate: { first: "«", previous: "‹", next: "›", last: "»" }
+            },
+            columns: [
+                {
+                    data: null,
+                    className: "text-center align-middle",
+                    render: function (d, t, r, meta) {
+                        return meta.row + 1;
+                    }
+                },
+                {
+                    data: 'name',
+                    className: "align-middle",
+                    render: function (data) {
+                        return `<div style="font-weight: 600; color: #0f172a; font-size: 14px;"><i class="fas fa-shapes text-teal me-2"></i>${esc(data)}</div>`;
+                    }
+                },
+                {
+                    data: 'code',
+                    className: "align-middle",
+                    render: function (data) {
+                        return `<span class="code-badge">${esc(data)}</span>`;
+                    }
+                },
+                {
+                    data: 'description',
+                    className: "align-middle",
+                    render: function (data) {
+                        if (!data) return '<span class="text-muted fst-italic">-</span>';
+                        return `<span style="font-size: 13px; color: #475569;">${esc(data)}</span>`;
+                    }
+                },
+                {
+                    data: 'foundationsCount',
+                    className: "text-center align-middle text-wrap text-nowrap",
+                    render: function (data) {
+                        var count = data || 0;
+                        return `<span class="badge-stat-pill text-wrap text-nowrap"><i class="fas fa-handshake"></i> ${count} Mitra</span>`;
+                    }
+                },
+                {
+                    data: 'menusCount',
+                    className: "text-center align-middle text-wrap text-nowrap",
+                    render: function (data) {
+                        var count = data || 0;
+                        return `<span class="badge-stat-pill text-wrap text-nowrap"><i class="fas fa-bars"></i> ${count} Menu</span>`;
+                    }
+                },
+                {
+                    data: 'isActive',
+                    className: "text-center align-middle",
+                    render: function (data, t, row) {
+                        var isChecked = data ? 'checked' : '';
+                        return `
+                            <div class="form-check form-switch d-inline-block m-0">
+                                <input class="form-check-input" type="checkbox" ${isChecked} onchange="toggleStatus(${row.id})" style="cursor:pointer;" title="Klik untuk mengubah status aktif/nonaktif">
+                            </div>
+                        `;
+                    }
+                },
+                {
+                    data: 'id',
+                    className: "text-end align-middle",
+                    render: function (id, t, row) {
+                        var safeRow = encodeURIComponent(JSON.stringify(row));
+                        return `
+                            <div class="d-inline-flex gap-1 justify-content-end">
+                                <button type="button" class="btn-action-icon text-teal" title="Edit Tipe Mitra" onclick="openEditModal('${safeRow}')">
+                                    <i class="fas fa-pen-to-square"></i>
+                                </button>
+                                <button type="button" class="btn-action-icon text-danger" title="Hapus Tipe Mitra" onclick="openDeleteModal(${id}, '${esc(row.name)}')">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        `;
+                    }
+                }
+            ],
+            order: [[0, 'asc']]
+        });
+    }
+
+    function openCreateModal() {
+        $('#formCreate')[0].reset();
+        $('#cActive').prop('checked', true);
+        AdminModal.open('modalCreate');
+    }
+
+    function submitCreate() {
+        var payload = {
+            name: $('#cName').val().trim(),
+            code: $('#cCode').val().trim(),
+            description: $('#cDescription').val().trim(),
+            isActive: $('#cActive').is(':checked')
+        };
+
+        $('#btnSaveCreate').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...');
+
+        $.ajax({
+            url: API_BASE_URL + '/FoundationTypes',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function () {
+                AdminModal.close('modalCreate');
+                AdminToast.success('Tipe model mitra berhasil ditambahkan.');
+                loadData();
+            },
+            error: function (xhr) {
+                var msg = xhr.responseJSON?.message || 'Gagal menyimpan tipe mitra.';
+                AdminToast.error(msg);
+            },
+            complete: function () {
+                $('#btnSaveCreate').prop('disabled', false).text('Simpan Tipe Mitra');
+            }
+        });
+    }
+
+    function openEditModal(encoded) {
+        var row = JSON.parse(decodeURIComponent(encoded));
+        $('#eId').val(row.id);
+        $('#eName').val(row.name);
+        $('#eCode').val(row.code);
+        $('#eDescription').val(row.description || '');
+        $('#eActive').prop('checked', row.isActive);
+        AdminModal.open('modalEdit');
+    }
+
+    function submitEdit() {
+        var id = parseInt($('#eId').val());
+        var payload = {
+            id: id,
+            name: $('#eName').val().trim(),
+            code: $('#eCode').val().trim(),
+            description: $('#eDescription').val().trim(),
+            isActive: $('#eActive').is(':checked')
+        };
+
+        $('#btnSaveEdit').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...');
+
+        $.ajax({
+            url: API_BASE_URL + '/FoundationTypes/' + id,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function () {
+                AdminModal.close('modalEdit');
+                AdminToast.success('Tipe model mitra berhasil diperbarui.');
+                loadData();
+            },
+            error: function (xhr) {
+                var msg = xhr.responseJSON?.message || 'Gagal memperbarui tipe mitra.';
+                AdminToast.error(msg);
+            },
+            complete: function () {
+                $('#btnSaveEdit').prop('disabled', false).text('Simpan Perubahan');
+            }
+        });
+    }
+
+    function toggleStatus(id) {
+        $.ajax({
+            url: API_BASE_URL + '/FoundationTypes/' + id + '/toggle-status',
+            type: 'PATCH',
+            success: function (res) {
+                AdminToast.success('Status tipe mitra berhasil diperbarui.');
+                loadData();
+            },
+            error: function (xhr) {
+                AdminToast.error(xhr.responseJSON?.message || 'Gagal mengubah status tipe mitra.');
+                loadData();
+            }
+        });
+    }
+
+    function openDeleteModal(id, name) {
+        $('#dId').val(id);
+        $('#dName').text(name);
+        AdminModal.open('modalDelete');
+    }
+
+    function confirmDelete() {
+        var id = parseInt($('#dId').val());
+        $('#btnConfirmDelete').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Menghapus...');
+
+        $.ajax({
+            url: API_BASE_URL + '/FoundationTypes/' + id,
+            type: 'DELETE',
+            success: function () {
+                AdminModal.close('modalDelete');
+                AdminToast.success('Tipe mitra berhasil dihapus.');
+                loadData();
+            },
+            error: function (xhr) {
+                var msg = xhr.responseJSON?.message || 'Gagal menghapus tipe mitra.';
+                AdminToast.error(msg);
+            },
+            complete: function () {
+                $('#btnConfirmDelete').prop('disabled', false).text('Ya, Hapus');
+            }
+        });
+    }
+
+    function esc(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+</script>
+}

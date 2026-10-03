@@ -1,0 +1,677 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Menu";
+}
+
+<style>
+    /* Scoped styling for Admin Menus */
+    .icon-picker-box {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+    .icon-preview-box {
+        width: 38px;
+        height: 38px;
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        color: #0f766e;
+        flex-shrink: 0;
+    }
+    #tableMenus th.text-wrap,
+    #tableMenus td.text-wrap {
+        white-space: normal !important;
+        vertical-align: middle !important;
+    }
+</style>
+
+<!-- Outermost View Wrapper adhering to aturan_styling.txt -->
+<div class="row">
+    <div class="col-12">
+
+<!-- Breadcrumb Bar: Pojok Kanan Atas Mandiri -->
+<div class="content-breadcrumb-bar">
+    <div class="breadcrumb-nav" id="pageBreadcrumb">
+        <span class="breadcrumb-current">Kelola Menu</span>
+        <span class="breadcrumb-separator">/</span>
+    </div>
+</div>
+
+<!-- Action Bar: Tombol di bawah Breadcrumb -->
+<div class="content-action-bar d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <button type="button" class="btn-primary-admin" onclick="openCreateModal()">
+        <i class="fas fa-plus"></i> Tambah Menu Baru
+    </button>
+    <div class="d-flex align-items-center gap-2">
+        <label for="filterFoundationType" class="form-field-label m-0 fw-semibold text-muted" style="font-size: 12.5px;">Filter Tipe Mitra:</label>
+        <select id="filterFoundationType" class="form-field-input" style="width: 250px; height: 38px; padding: 4px 10px;" onchange="applyTypeFilter()">
+            <option value="">Semua Tipe Mitra</option>
+            <option value="global">Menu Global / Super Admin</option>
+        </select>
+    </div>
+</div>
+
+<div class="admin-card">
+    <div class="table-responsive p-3">
+        <table class="table table-hover align-middle w-100" id="tableMenus">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 50px; text-align:center;">NO</th>
+                    <th style="width: 60px; text-align:center;">IKON</th>
+                    <th class="text-wrap">LABEL MENU</th>
+                    <th style="width: 170px;">TIPE MODEL MITRA</th>
+                    <th>URL / ROUTE</th>
+                    <th>NOTE</th>
+                    <th>STATUS</th>
+                    <th style="text-align: right; width: 130px;" class="text-wrap">AKSI</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Tambah Menu -->
+<div class="admin-modal-backdrop" id="modalCreate">
+    <div class="admin-modal-card">
+        <div class="admin-modal-head">
+            <h4 class="admin-modal-title">Tambah Menu Navigasi</h4>
+            <button type="button" class="btn-modal-close" onclick="AdminModal.close('modalCreate')">&times;</button>
+        </div>
+        <form id="formCreate" onsubmit="event.preventDefault(); submitCreate();">
+            <div class="admin-modal-content">
+                <div class="form-field-group">
+                    <label class="form-field-label">Label Menu <span style="color:#ef4444;">*</span></label>
+                    <input type="text" id="cLabel" class="form-field-input" placeholder="Contoh: Manajemen Donasi" required />
+                </div>
+                <div class="form-field-group">
+                    <label class="form-field-label">URL / Route Path <span style="color:#ef4444;">*</span></label>
+                    <input type="text" id="cUrl" class="form-field-input" placeholder="Contoh: /Foundations" required />
+                </div>
+                <div class="form-field-group">
+                    <label class="form-field-label">Tipe Model Mitra / Peruntukan Solusi</label>
+                    <select id="cFoundationTypeId" class="form-field-input">
+                        <option value="">-- Menu Global / Super Admin (Semua Mitra) --</option>
+                    </select>
+                    <small class="text-muted" style="font-size:11px;">Pilih tipe mitra jika menu ini spesifik untuk modul tertentu (cth: Yayasan Donasi, POS, dsb).</small>
+                </div>
+                <div class="form-field-group">
+                    <label class="form-field-label">FontAwesome Icon Class</label>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <span id="cIconPreview" style="width:38px; height:38px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; font-size:18px; color:#0f766e; flex-shrink:0;">
+                            <i class="fas fa-circle-dot"></i>
+                        </span>
+                        <input type="text" id="cIcon" class="form-field-input" value="fas fa-circle-dot" oninput="updateIconPreview('cIcon', 'cIconPreview')" />
+                        <button type="button" class="btn-secondary-admin" style="padding:0 12px; height:38px; white-space:nowrap; display:inline-flex; align-items:center; gap:6px;" onclick="openIconPicker('cIcon', 'cIconPreview')">
+                            <i class="fas fa-icons text-teal-600"></i> Pilih Ikon
+                        </button>
+                    </div>
+                </div>
+                <div class="form-field-group" style="margin-top:12px;">
+                    <label class="form-field-label">Note</label>
+                    <textarea id="cNote" class="form-field-input" rows="2" placeholder="Contoh: ini untuk super admin / foundation / donor"></textarea>
+                    <small class="text-muted" style="font-size:11px;">Sebagai catatan pengingat bahwa menu ini ditujukan untuk siapa.</small>
+                </div>
+            </div>
+            <div class="admin-modal-foot">
+                <button type="button" class="btn-secondary-admin" onclick="AdminModal.close('modalCreate')">Batal</button>
+                <button type="submit" class="btn-primary-admin" id="btnSaveCreate">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Edit Menu -->
+<div class="admin-modal-backdrop" id="modalEdit">
+    <div class="admin-modal-card">
+        <div class="admin-modal-head">
+            <h4 class="admin-modal-title">Edit Menu Navigasi</h4>
+            <button type="button" class="btn-modal-close" onclick="AdminModal.close('modalEdit')">&times;</button>
+        </div>
+        <form id="formEdit" onsubmit="event.preventDefault(); submitEdit();">
+            <input type="hidden" id="editId" />
+            <div class="admin-modal-content">
+                <div class="form-field-group">
+                    <label class="form-field-label">Label Menu <span style="color:#ef4444;">*</span></label>
+                    <input type="text" id="eLabel" class="form-field-input" required />
+                </div>
+                <div class="form-field-group">
+                    <label class="form-field-label">URL / Route Path <span style="color:#ef4444;">*</span></label>
+                    <input type="text" id="eUrl" class="form-field-input" required />
+                </div>
+                <div class="form-field-group">
+                    <label class="form-field-label">Tipe Model Mitra / Peruntukan Solusi</label>
+                    <select id="eFoundationTypeId" class="form-field-input">
+                        <option value="">-- Menu Global / Super Admin (Semua Mitra) --</option>
+                    </select>
+                    <small class="text-muted" style="font-size:11px;">Pilih tipe mitra jika menu ini spesifik untuk modul tertentu (cth: Yayasan Donasi, POS, dsb).</small>
+                </div>
+                <div class="form-field-group">
+                    <label class="form-field-label">FontAwesome Icon Class</label>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <span id="eIconPreview" style="width:38px; height:38px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; font-size:18px; color:#0f766e; flex-shrink:0;">
+                            <i class="fas fa-circle-dot"></i>
+                        </span>
+                        <input type="text" id="eIcon" class="form-field-input" oninput="updateIconPreview('eIcon', 'eIconPreview')" />
+                        <button type="button" class="btn-secondary-admin" style="padding:0 12px; height:38px; white-space:nowrap; display:inline-flex; align-items:center; gap:6px;" onclick="openIconPicker('eIcon', 'eIconPreview')">
+                            <i class="fas fa-icons text-teal-600"></i> Pilih Ikon
+                        </button>
+                    </div>
+                </div>
+                <div class="form-field-group" style="margin-top:12px;">
+                    <label class="form-field-label">Note</label>
+                    <textarea id="eNote" class="form-field-input" rows="2" placeholder="Contoh: ini untuk super admin / foundation / donor"></textarea>
+                    <small class="text-muted" style="font-size:11px;">Sebagai catatan pengingat bahwa menu ini ditujukan untuk siapa.</small>
+                </div>
+                <div class="form-field-group" style="margin-top:12px;">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.8rem; font-weight:600;">
+                        <input type="checkbox" id="eActive" style="width:16px; height:16px;" checked />
+                        <span>Status Menu Aktif</span>
+                    </label>
+                </div>
+            </div>
+            <div class="admin-modal-foot">
+                <button type="button" class="btn-secondary-admin" onclick="AdminModal.close('modalEdit')">Batal</button>
+                <button type="submit" class="btn-primary-admin" id="btnSaveEdit">Perbarui</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Visual Icon Picker -->
+<div class="admin-modal-backdrop modal-stacked" id="modalIconPicker" style="z-index: 3000 !important;">
+    <div class="admin-modal-card" style="max-width: 680px; width: 95%;">
+        <div class="admin-modal-head">
+            <h4 class="admin-modal-title" style="display:flex; align-items:center; gap:8px;">
+                <i class="fas fa-icons" style="color:#0f766e;"></i> Pilih Ikon FontAwesome
+            </h4>
+            <button type="button" class="btn-modal-close" onclick="AdminModal.close('modalIconPicker')">&times;</button>
+        </div>
+        <div class="admin-modal-content" style="padding:16px 20px;">
+            <div style="margin-bottom: 12px; position:relative;">
+                <input type="text" id="iconPickerSearch" class="form-field-input" placeholder="Ketik kata kunci untuk mencari ikon (contoh: user, chart, money, settings, heart, gift)..." style="padding-left:36px;" oninput="filterIcons()" />
+                <i class="fas fa-search" style="position:absolute; left:12px; top:12px; color:#94a3b8; font-size:14px;"></i>
+            </div>
+            <div style="font-size:0.75rem; color:#64748b; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                <span>Klik ikon untuk langsung memilih dan mengisi kolom input.</span>
+                <span id="iconMatchCount" style="font-weight:600; color:#0f766e;"></span>
+            </div>
+            <div id="iconGridContainer" style="display:flex; flex-wrap:wrap; gap:8px; max-height:360px; overflow-y:auto; padding:4px;">
+                <!-- Generated dynamically via JS -->
+            </div>
+        </div>
+        <div class="admin-modal-foot">
+            <button type="button" class="btn-secondary-admin" onclick="AdminModal.close('modalIconPicker')">Tutup</button>
+        </div>
+    </div>
+</div>
+
+    </div> <!-- Close outer col-12 -->
+</div> <!-- Close outer row -->
+
+@section Scripts {
+<script>
+    var dtMenus = null;
+    var allMenus = [];
+
+    function renderMenuTable(menus) {
+        if ($.fn.DataTable.isDataTable('#tableMenus')) {
+            $('#tableMenus').DataTable().destroy();
+        }
+        dtMenus = $('#tableMenus').DataTable({
+            data: menus || [],
+            pageLength: 10,
+            lengthMenu: [
+                [10, 25, 50, 100, -1],
+                [10, 25, 50, 100, "Semua"]
+            ],
+            columns: [
+                {
+                    data: null,
+                    className: "text-center fw-bold text-muted",
+                    render: function (data, type, row, meta) {
+                        return meta.row + 1;
+                    }
+                },
+                {
+                    data: null,
+                    orderable: false,
+                    className: "text-center",
+                    render: function (data, type, m) {
+                        var iconClass = m.iconClass || m.icon || 'fas fa-circle-dot';
+                        return `
+                            <span class="stat-icon-wrapper stat-icon-teal" style="width:26px; height:26px; font-size:11px; margin:0 auto;">
+                                <i class="${iconClass}"></i>
+                            </span>
+                        `;
+                    }
+                },
+                {
+                    data: 'label',
+                    className: "text-wrap align-middle",
+                    render: function (data, type, m) {
+                        var label = data || m.namaMenu || '';
+                        return `<strong style="color:#0f172a;" class="text-wrap d-inline-block">${escHtml(label)}</strong>`;
+                    }
+                },
+                {
+                    data: 'foundationTypeName',
+                    className: "align-middle",
+                    render: function (data) {
+                        if (data) {
+                            return `<span class="badge" style="background:#ccfbf1; color:#0f766e; border:1px solid #99f6e4; font-size:12px; font-weight:600; padding:4px 8px;"><i class="fas fa-shapes me-1"></i>${escHtml(data)}</span>`;
+                        }
+                        return '<span class="badge bg-light text-muted border px-2 py-1" style="font-size:11.5px; font-weight:500;">Global / Admin</span>';
+                    }
+                },
+                {
+                    data: 'routeUrl',
+                    render: function (data, type, m) {
+                        var url = data || m.url || '#';
+                        return `<span class="code-tag">${escHtml(url)}</span>`;
+                    }
+                },
+                {
+                    data: 'note',
+                    render: function (data) {
+                        if (data) {
+                            return `<span class="badge bg-light text-dark border px-2 py-1" style="font-size:11.5px; font-weight:500;">${escHtml(data)}</span>`;
+                        }
+                        return '<span class="text-muted small">-</span>';
+                    }
+                },
+                {
+                    data: 'isActive',
+                    render: function (data) {
+                        return data !== false
+                            ? '<span class="status-pill pill-active"><span class="dot-indicator"></span>Aktif</span>'
+                            : '<span class="status-pill pill-inactive"><span class="dot-indicator"></span>Nonaktif</span>';
+                    }
+                },
+                {
+                    data: 'id',
+                    orderable: false,
+                    className: "text-end text-wrap align-middle",
+                    render: function (data, type, m) {
+                        var label = m.label || m.namaMenu || '';
+                        return `
+                            <div class="text-wrap d-inline-flex gap-1 justify-content-end align-items-center">
+                                <button type="button" class="btn-table-action btn-table-edit text-wrap" onclick="openEdit(${data})">
+                                    <i class="fas fa-pen"></i> Edit
+                                </button>
+                                <button type="button" class="btn-table-action btn-table-del text-wrap" onclick="delMenu(${data}, '${escHtml(label)}')">
+                                    <i class="fas fa-trash"></i> Hapus
+                                </button>
+                            </div>
+                        `;
+                    }
+                }
+            ]
+        });
+    }
+
+    function loadMenus() {
+        $.ajax({
+            url: API_BASE_URL + '/menus',
+            type: 'GET',
+            dataType: 'json',
+            success: function (menus) {
+                allMenus = menus || [];
+                renderMenuTable(allMenus);
+            },
+            error: function () {
+                AdminToast.error('Gagal mengambil data menu');
+                renderMenuTable([]);
+            }
+        });
+    }
+
+    window.openCreateModal = function () {
+        $('#formCreate')[0].reset();
+        $('#cFoundationTypeId').val('');
+        $('#cIcon').val('fas fa-circle-dot');
+        $('#cIconPreview').html('<i class="fas fa-circle-dot"></i>');
+        AdminModal.open('modalCreate');
+    };
+
+    window.submitCreate = function () {
+        var fd = new FormData();
+        fd.append('Label', $('#cLabel').val());
+        fd.append('RouteUrl', $('#cUrl').val());
+        var ftVal = $('#cFoundationTypeId').val();
+        if (ftVal) fd.append('FoundationTypeId', ftVal);
+        fd.append('IconClass', $('#cIcon').val() || 'fas fa-circle-dot');
+        fd.append('OrderIndex', 0);
+        fd.append('Note', $('#cNote').val() || '');
+
+        $('#btnSaveCreate').prop('disabled', true).text('Menyimpan...');
+
+        $.ajax({
+            url: API_BASE_URL + '/menus',
+            type: 'POST',
+            data: fd,
+            processData: false,
+            contentType: false,
+            success: function () {
+                $('#btnSaveCreate').prop('disabled', false).text('Simpan');
+                AdminModal.close('modalCreate');
+                AdminToast.success('Menu berhasil ditambahkan');
+                loadMenus();
+            },
+            error: function (xhr) {
+                $('#btnSaveCreate').prop('disabled', false).text('Simpan');
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Gagal menyimpan menu';
+                AdminToast.error(msg);
+            }
+        });
+    }
+
+    // FontAwesome Icon Catalog
+    var activeTargetInput = 'cIcon';
+    var activeTargetPreview = 'cIconPreview';
+
+    var iconCatalog = window.FONT_AWESOME_ICONS || [
+        // Navigation & Dashboard
+        { cls: 'fas fa-gauge-high', name: 'gauge dashboard speed' },
+        { cls: 'fas fa-chart-pie', name: 'chart pie diagram analitik' },
+        { cls: 'fas fa-chart-line', name: 'chart line grafik tren' },
+        { cls: 'fas fa-chart-simple', name: 'chart bar statistik' },
+        { cls: 'fas fa-bars', name: 'bars menu hamburger navigasi' },
+        { cls: 'fas fa-bars-staggered', name: 'bars staggered list menu' },
+        { cls: 'fas fa-house', name: 'house home beranda dashboard' },
+        { cls: 'fas fa-table-columns', name: 'table columns layout dashboard' },
+        { cls: 'fas fa-compass', name: 'compass kompas navigasi jelajah' },
+        { cls: 'fas fa-sitemap', name: 'sitemap struktur hierarki organisasi' },
+
+        // Users & Organizations
+        { cls: 'fas fa-users', name: 'users orang anggota kelompok tim' },
+        { cls: 'fas fa-user', name: 'user pengguna akun profile' },
+        { cls: 'fas fa-user-gear', name: 'user gear setting kelola admin' },
+        { cls: 'fas fa-user-shield', name: 'user shield keamanan hak akses role' },
+        { cls: 'fas fa-user-check', name: 'user check verifikasi disetujui' },
+        { cls: 'fas fa-user-plus', name: 'user plus tambah anggota registrasi' },
+        { cls: 'fas fa-id-card', name: 'id card identitas ktp profil' },
+        { cls: 'fas fa-handshake', name: 'handshake mitra partner kerjasama startup' },
+        { cls: 'fas fa-building-ngo', name: 'building ngo yayasan lembaga organisasi mitra' },
+        { cls: 'fas fa-building', name: 'building kantor instansi perusahaan' },
+        { cls: 'fas fa-landmark', name: 'landmark pemerintah bank gedung' },
+
+        // Roles & Security
+        { cls: 'fas fa-shield-halved', name: 'shield keamanan proteksi hak akses role' },
+        { cls: 'fas fa-shield-cat', name: 'shield cat cyber security' },
+        { cls: 'fas fa-lock', name: 'lock kunci sandi privasi gembok' },
+        { cls: 'fas fa-key', name: 'key kunci api token otentikasi' },
+        { cls: 'fas fa-fingerprint', name: 'fingerprint sidik jari biometrik login' },
+        { cls: 'fas fa-user-lock', name: 'user lock akun terkunci privasi' },
+
+        // Donation & Charity / Foundation
+        { cls: 'fas fa-hand-holding-heart', name: 'hand holding heart donasi sedekah kasih' },
+        { cls: 'fas fa-heart', name: 'heart cinta suka donasi kepedulian' },
+        { cls: 'fas fa-hand-holding-dollar', name: 'hand holding dollar infaq wakaf zakat uang' },
+        { cls: 'fas fa-hands-holding-child', name: 'hands holding child yatim anak dhuafa panti' },
+        { cls: 'fas fa-hands-praying', name: 'hands praying doa ibadah zakat' },
+        { cls: 'fas fa-mosque', name: 'mosque masjid islam syariah wakaf' },
+        { cls: 'fas fa-box-heart', name: 'box heart bantuan paket sembako' },
+        { cls: 'fas fa-ribbon', name: 'ribbon pita peduli bencana kanker' },
+        { cls: 'fas fa-gift', name: 'gift kado hadiah santunan berkah' },
+
+        // Campaigns & Marketing
+        { cls: 'fas fa-bullhorn', name: 'bullhorn pengumuman kampanye campaign broadcast' },
+        { cls: 'fas fa-flag', name: 'flag bendera target campaign' },
+        { cls: 'fas fa-bullseye', name: 'bullseye target sasaran campaign goal' },
+        { cls: 'fas fa-newspaper', name: 'newspaper berita artikel kabar program' },
+        { cls: 'fas fa-share-nodes', name: 'share sosial media sosialisasi' },
+        { cls: 'fas fa-envelope-open-text', name: 'envelope surat kampanye email blast' },
+
+        // Finance & Payment
+        { cls: 'fas fa-wallet', name: 'wallet dompet saldo pencairan rekening' },
+        { cls: 'fas fa-money-bill-wave', name: 'money bill wave uang tunai transfer' },
+        { cls: 'fas fa-receipt', name: 'receipt struk kwitansi mutasi transaksi' },
+        { cls: 'fas fa-credit-card', name: 'credit card kartu debet pembayaran midtrans' },
+        { cls: 'fas fa-file-invoice-dollar', name: 'invoice tagihan faktur donasi' },
+        { cls: 'fas fa-scale-balanced', name: 'scale neraca keuangan kas akuntansi' },
+        { cls: 'fas fa-coins', name: 'coins koin perolehan dana zakat' },
+        { cls: 'fas fa-money-check-dollar', name: 'money check cek transfer donasi' },
+
+        // Workflow & Approval
+        { cls: 'fas fa-list-check', name: 'list check approval tugas checklist verifikasi' },
+        { cls: 'fas fa-clipboard-check', name: 'clipboard check validasi inspeksi survei' },
+        { cls: 'fas fa-stamp', name: 'stamp cap persetujuan legalisasi approval' },
+        { cls: 'fas fa-diagram-project', name: 'diagram project alur proses tahapan workflow' },
+        { cls: 'fas fa-arrows-split-up-and-left', name: 'arrows workflow cabang rute' },
+        { cls: 'fas fa-signature', name: 'signature tanda tangan pengesahan berkas' },
+
+        // Reports & Data
+        { cls: 'fas fa-file-lines', name: 'file lines dokumen laporan teks' },
+        { cls: 'fas fa-file-pdf', name: 'file pdf berkas laporan download' },
+        { cls: 'fas fa-file-excel', name: 'file excel export spreadsheet xls' },
+        { cls: 'fas fa-box-archive', name: 'archive arsip riwayat berkas lama' },
+        { cls: 'fas fa-clock-rotate-left', name: 'clock history riwayat audit log aktivitas' },
+        { cls: 'fas fa-database', name: 'database basis data backup server' },
+
+        // Communication & Notifications
+        { cls: 'fas fa-bell', name: 'bell lonceng notifikasi pemberitahuan alert' },
+        { cls: 'fas fa-envelope', name: 'envelope pesan surat email kontak' },
+        { cls: 'fas fa-comments', name: 'comments percakapan obrolan chat forum' },
+        { cls: 'fas fa-headset', name: 'headset bantuan cs support tiket keluhan' },
+        { cls: 'fas fa-circle-question', name: 'question tanya faq panduan bantuan' },
+
+        // Settings & Tools
+        { cls: 'fas fa-gear', name: 'gear roda pengaturan konfigurasi settings' },
+        { cls: 'fas fa-gears', name: 'gears pengaturan sistem tools utility' },
+        { cls: 'fas fa-sliders', name: 'sliders filter konfigurasi parameter opsi' },
+        { cls: 'fas fa-wrench', name: 'wrench peralatan utilitas maintenance perbaikan' },
+        { cls: 'fas fa-palette', name: 'palette tema tampilan kustomisasi branding' },
+        { cls: 'fas fa-globe', name: 'globe domain bahasa publik website online' },
+        { cls: 'fas fa-server', name: 'server vps cloud infrastruktur sistem' },
+        { cls: 'fas fa-shield', name: 'shield perlindungan keamanan ssl' },
+        { cls: 'fas fa-network-wired', name: 'network jaringan api integrasi webhook' },
+        { cls: 'fas fa-plug', name: 'plug plugin ekstensi integrasi webhook api' },
+        { cls: 'fas fa-code', name: 'code kode developer api json rest' },
+        { cls: 'fas fa-circle-dot', name: 'circle dot titik umum default item' },
+        { cls: 'fas fa-star', name: 'star bintang unggulan favorit utama' },
+        { cls: 'fas fa-tags', name: 'tags label kategori taksonomi penanda' },
+        { cls: 'fas fa-folder-tree', name: 'folder tree direktori hierarki berkas' },
+        { cls: 'fas fa-cloud-arrow-up', name: 'cloud upload unggah file berkas cadangan' }
+    ];
+
+    function renderIconGrid(list) {
+        var $grid = $('#iconGridContainer');
+        $grid.empty();
+        $('#iconMatchCount').text(list.length + ' ikon tersedia');
+
+        if (list.length === 0) {
+            $grid.html('<div style="grid-column: 1 / -1; text-align:center; padding:30px; color:#94a3b8;"><i class="fas fa-search" style="font-size:24px; margin-bottom:8px; display:block;"></i>Tidak ada ikon yang cocok</div>');
+            return;
+        }
+
+        var currentVal = $('#' + activeTargetInput).val();
+
+        list.forEach(function(item) {
+            var isSelected = (currentVal === item.cls);
+            var card = $(`
+                <div class="icon-pick-btn ${isSelected ? 'selected' : ''}" data-class="${item.cls}" title="${item.cls}" style="
+                    display:flex; flex-direction:column; align-items:center; justify-content:center;
+                    padding:10px 4px; border-radius:8px; border:1px solid ${isSelected ? '#0f766e' : '#e2e8f0'};
+                    background:${isSelected ? '#f0fdfa' : '#ffffff'}; cursor:pointer; transition:all 0.15s ease;
+                    text-align:center;
+                ">
+                    <i class="${item.cls}" style="font-size:22px; color:${isSelected ? '#0f766e' : '#334155'}; margin-bottom:6px;"></i>
+                    <span style="font-size:10px; color:#64748b; line-height:1.2; word-break:break-all; max-width:100%; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">
+                        ${item.cls.replace('fas fa-', '')}
+                    </span>
+                </div>
+            `);
+
+            card.hover(
+                function() { $(this).css({ 'background': '#f8fafc', 'border-color': '#0f766e', 'transform': 'translateY(-2px)' }); },
+                function() { 
+                    var curSel = ($('#' + activeTargetInput).val() === item.cls);
+                    $(this).css({ 
+                        'background': curSel ? '#f0fdfa' : '#ffffff', 
+                        'border-color': curSel ? '#0f766e' : '#e2e8f0', 
+                        'transform': 'none' 
+                    }); 
+                }
+            );
+
+            card.on('click', function() {
+                pickIcon(item.cls);
+            });
+
+            $grid.append(card);
+        });
+    }
+
+    window.openIconPicker = function(targetInputId, previewSpanId) {
+        activeTargetInput = targetInputId;
+        activeTargetPreview = previewSpanId;
+        $('#iconPickerSearch').val('');
+        renderIconGrid(iconCatalog);
+        AdminModal.open('modalIconPicker');
+        setTimeout(function() {
+            $('#iconPickerSearch').focus();
+        }, 150);
+    };
+
+    window.pickIcon = function(cls) {
+        $('#' + activeTargetInput).val(cls);
+        $('#' + activeTargetPreview).html('<i class="' + cls + '"></i>');
+        AdminModal.close('modalIconPicker');
+        AdminToast.success('Ikon ' + cls + ' dipilih');
+    };
+
+    window.filterIcons = function() {
+        var query = ($('#iconPickerSearch').val() || '').toLowerCase().trim();
+        if (!query) {
+            renderIconGrid(iconCatalog);
+            return;
+        }
+        var filtered = iconCatalog.filter(function(item) {
+            return item.cls.toLowerCase().includes(query) || item.name.toLowerCase().includes(query);
+        });
+        renderIconGrid(filtered);
+    };
+
+    window.updateIconPreview = function(inputId, previewId) {
+        var val = $('#' + inputId).val() || 'fas fa-circle-dot';
+        $('#' + previewId).html('<i class="' + val + '"></i>');
+    };
+
+    window.openEdit = function (id) {
+        var m = allMenus.find(x => x.id === id);
+        if (!m) return;
+
+        var iconCls = m.iconClass || m.icon || 'fas fa-circle-dot';
+        $('#editId').val(m.id);
+        $('#eLabel').val(m.label || m.namaMenu || '');
+        $('#eUrl').val(m.routeUrl || m.url || '');
+        $('#eIcon').val(iconCls);
+        $('#eIconPreview').html('<i class="' + iconCls + '"></i>');
+        $('#eFoundationTypeId').val(m.foundationTypeId || '');
+        $('#eNote').val(m.note || '');
+        $('#eActive').prop('checked', m.isActive !== false);
+
+        AdminModal.open('modalEdit');
+    };
+
+    window.submitEdit = function () {
+        var id = $('#editId').val();
+        var fd = new FormData();
+        fd.append('Id', id);
+        fd.append('Label', $('#eLabel').val());
+        fd.append('RouteUrl', $('#eUrl').val());
+        var ftVal = $('#eFoundationTypeId').val();
+        if (ftVal) fd.append('FoundationTypeId', ftVal);
+        fd.append('IconClass', $('#eIcon').val() || '');
+        var currMenu = allMenus.find(function(x) { return x.id == id; });
+        fd.append('OrderIndex', currMenu ? (currMenu.orderIndex || 0) : 0);
+        if (currMenu && currMenu.parentId) fd.append('ParentId', currMenu.parentId);
+        fd.append('Note', $('#eNote').val() || '');
+        fd.append('IsActive', $('#eActive').is(':checked'));
+
+        $('#btnSaveEdit').prop('disabled', true).text('Menyimpan...');
+
+        $.ajax({
+            url: API_BASE_URL + '/menus/' + id,
+            type: 'POST',
+            data: fd,
+            processData: false,
+            contentType: false,
+            success: function () {
+                $('#btnSaveEdit').prop('disabled', false).text('Perbarui');
+                AdminModal.close('modalEdit');
+                AdminToast.success('Menu berhasil diperbarui');
+                loadMenus();
+            },
+            error: function (xhr) {
+                $('#btnSaveEdit').prop('disabled', false).text('Perbarui');
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Gagal memperbarui menu';
+                AdminToast.error(msg);
+            }
+        });
+    };
+
+    window.delMenu = function (id, label) {
+        if (confirm('Hapus menu ' + label + '?')) {
+            $.ajax({
+                url: API_BASE_URL + '/menus/' + id,
+                type: 'DELETE',
+                dataType: 'json',
+                success: function () {
+                    AdminToast.success('Menu telah dihapus');
+                    loadMenus();
+                },
+                error: function () {
+                    AdminToast.error('Gagal menghapus menu');
+                }
+            });
+        }
+    };
+
+    function loadFoundationTypes() {
+        $.ajax({
+            url: API_BASE_URL + '/FoundationTypes',
+            type: 'GET',
+            headers: (typeof API_CONFIG !== 'undefined' && API_CONFIG.getHeaders) ? API_CONFIG.getHeaders() : {},
+            success: function (res) {
+                var types = Array.isArray(res) ? res : (res.data || []);
+                var opts = '<option value="">-- Menu Global / Super Admin (Semua Mitra) --</option>';
+                var filterOpts = '<option value="">Semua Tipe Mitra</option><option value="global">Menu Global / Super Admin</option>';
+                types.forEach(function (t) {
+                    opts += `<option value="${t.id}">${escHtml(t.name)}</option>`;
+                    filterOpts += `<option value="${t.id}">${escHtml(t.name)}</option>`;
+                });
+                $('#cFoundationTypeId').html(opts);
+                $('#eFoundationTypeId').html(opts);
+                $('#filterFoundationType').html(filterOpts);
+            }
+        });
+    }
+
+    window.applyTypeFilter = function () {
+        var val = $('#filterFoundationType').val();
+        if (!val) {
+            renderMenuTable(allMenus);
+        } else if (val === 'global') {
+            var filtered = allMenus.filter(x => !x.foundationTypeId);
+            renderMenuTable(filtered);
+        } else {
+            var tid = parseInt(val);
+            var filtered = allMenus.filter(x => x.foundationTypeId === tid);
+            renderMenuTable(filtered);
+        }
+    };
+
+    $(function () {
+        loadMenus();
+        loadFoundationTypes();
+        renderIconGrid();
+    });
+</script>
+}

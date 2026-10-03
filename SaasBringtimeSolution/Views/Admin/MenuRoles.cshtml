@@ -1,0 +1,710 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Menu Roles";
+}
+
+<style>
+    /* Scoped styling for Admin MenuRoles */
+    .menurole-badge {
+        font-family: monospace;
+        color: #64748b;
+    }
+    .type-toggle-box {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 6px;
+    }
+    .type-radio-label {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        background: #f8fafc;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #475569;
+    }
+    .type-radio-label:hover {
+        border-color: #cbd5e1;
+        background: #ffffff;
+    }
+    .type-radio-label input[type="radio"]:checked + span {
+        color: #0f766e;
+    }
+    .type-radio-label:has(input[type="radio"]:checked) {
+        border-color: #0f766e;
+        background: #f0fdfa;
+        color: #0f766e;
+    }
+    .badge-subitem {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: #f1f5f9;
+        color: #334155;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        padding: 2px 7px;
+        font-size: 11px;
+        font-weight: 500;
+        margin: 2px 2px 0 0;
+    }
+</style>
+
+<!-- Outermost View Wrapper adhering to aturan_styling.txt -->
+<div class="row">
+    <div class="col-12">
+
+<!-- Breadcrumb Bar: Pojok Kanan Atas Mandiri -->
+<div class="content-breadcrumb-bar">
+    <div class="breadcrumb-nav" id="pageBreadcrumb">
+        <span class="breadcrumb-current">Menu Roles</span>
+        <span class="breadcrumb-separator">/</span>
+    </div>
+</div>
+
+<!-- Action Bar: Tombol di bawah Breadcrumb -->
+<div class="content-action-bar">
+    <button type="button" class="btn-primary-admin" onclick="openCreateModal()">
+        <i class="fas fa-plus"></i> Berikan Izin Menu / Grup
+    </button>
+</div>
+
+<div class="admin-card">
+    <div class="table-responsive p-3">
+        <table class="table table-hover align-middle w-100" id="tableMenuRoles">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 50px; text-align:center;">NO</th>
+                    <th style="width: 70px; text-align:center;">URUTAN</th>
+                    <th>PERAN (ROLE)</th>
+                    <th>TIPE</th>
+                    <th>NAVIGASI (MENU / GRUP)</th>
+                    <th>STATUS</th>
+                    <th style="text-align: right; width: 140px;">AKSI</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Tambah Izin Menu / Grup -->
+<div class="admin-modal-backdrop" id="modalCreate">
+    <div class="admin-modal-card" style="max-width: 540px;">
+        <div class="admin-modal-head">
+            <h4 class="admin-modal-title">Otorisasi Menu atau Grup ke Peran</h4>
+            <button type="button" class="btn-modal-close" onclick="AdminModal.close('modalCreate')">&times;</button>
+        </div>
+        <form id="formCreate" onsubmit="event.preventDefault(); submitCreate();">
+            <div class="admin-modal-content">
+                <div class="form-field-group">
+                    <label class="form-field-label">Pilih Peran (Role) <span style="color:#ef4444;">*</span></label>
+                    <select id="cRole" class="form-field-select" required>
+                        <option value="">-- Pilih Peran --</option>
+                    </select>
+                </div>
+
+                <div class="form-field-group">
+                    <label class="form-field-label">Tipe Navigasi <span style="color:#ef4444;">*</span></label>
+                    <div class="type-toggle-box">
+                        <label class="type-radio-label">
+                            <input type="radio" name="cTargetType" value="menu" checked onchange="handleTargetTypeToggle('c', 'menu')" />
+                            <span><i class="fas fa-link me-1"></i> Menu Mandiri</span>
+                        </label>
+                        <label class="type-radio-label">
+                            <input type="radio" name="cTargetType" value="group" onchange="handleTargetTypeToggle('c', 'group')" />
+                            <span><i class="fas fa-folder me-1"></i> Grup Dropdown</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Block Menu Mandiri -->
+                <div id="cBlockMenu">
+                    <div class="form-field-group">
+                        <label class="form-field-label">Pilih Menu Navigasi <span style="color:#ef4444;">*</span></label>
+                        <select id="cMenu" class="form-field-select" onchange="handleMenuSelectionChange(this.value)">
+                            <option value="">-- Pilih Menu --</option>
+                        </select>
+                    </div>
+                    <div class="form-field-group" id="groupMenuNote">
+                        <label class="form-field-label text-muted small">Catatan Menu</label>
+                        <textarea id="cMenuNote" class="form-field-input bg-light" rows="2" disabled placeholder="Pilih menu di atas untuk melihat catatan..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Block Grup Dropdown -->
+                <div id="cBlockGroup" style="display: none;">
+                    <div class="form-field-group">
+                        <label class="form-field-label">Pilih Grup Menu <span style="color:#ef4444;">*</span></label>
+                        <select id="cGroup" class="form-field-select" onchange="handleGroupSelectionChange(this.value)">
+                            <option value="">-- Pilih Grup --</option>
+                        </select>
+                    </div>
+                    <div class="form-field-group">
+                        <label class="form-field-label text-muted small">Daftar Sub-menu dalam Grup Ini</label>
+                        <div id="cGroupPreview" class="p-2 bg-light rounded border text-muted small" style="min-height: 42px;">
+                            Pilih grup di atas untuk melihat daftar sub-menu...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-field-group">
+                    <label class="form-field-label">Urutan Tampilan pada Peran Ini <span style="color:#ef4444;">*</span></label>
+                    <input type="number" id="cOrder" class="form-field-input" value="1" min="1" required />
+                    <small class="text-muted" style="font-size:11px;">Menentukan urutan tampilan item ini di sidebar untuk peran tersebut (1, 2, 3, dst).</small>
+                </div>
+
+                <div class="form-field-group" style="margin-top:12px;">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.8rem; font-weight:600;">
+                        <input type="checkbox" id="cActive" style="width:16px; height:16px;" checked />
+                        <span>Status Izin Aktif (Tampilkan di Sidebar Pengguna)</span>
+                    </label>
+                </div>
+            </div>
+            <div class="admin-modal-foot">
+                <button type="button" class="btn-secondary-admin" onclick="AdminModal.close('modalCreate')">Batal</button>
+                <button type="submit" class="btn-primary-admin" id="btnSaveCreate">Berikan Izin</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Edit Izin Menu / Grup -->
+<div class="admin-modal-backdrop" id="modalEdit">
+    <div class="admin-modal-card" style="max-width: 540px;">
+        <div class="admin-modal-head">
+            <h4 class="admin-modal-title">Edit Otorisasi Menu / Grup</h4>
+            <button type="button" class="btn-modal-close" onclick="AdminModal.close('modalEdit')">&times;</button>
+        </div>
+        <form id="formEdit" onsubmit="event.preventDefault(); submitEdit();">
+            <input type="hidden" id="editId" />
+            <div class="admin-modal-content">
+                <div class="form-field-group">
+                    <label class="form-field-label">Pilih Peran (Role) <span style="color:#ef4444;">*</span></label>
+                    <select id="eRole" class="form-field-select" required>
+                        <option value="">-- Pilih Peran --</option>
+                    </select>
+                </div>
+
+                <div class="form-field-group">
+                    <label class="form-field-label">Tipe Navigasi <span style="color:#ef4444;">*</span></label>
+                    <div class="type-toggle-box">
+                        <label class="type-radio-label">
+                            <input type="radio" name="eTargetType" value="menu" checked onchange="handleTargetTypeToggle('e', 'menu')" />
+                            <span><i class="fas fa-link me-1"></i> Menu Mandiri</span>
+                        </label>
+                        <label class="type-radio-label">
+                            <input type="radio" name="eTargetType" value="group" onchange="handleTargetTypeToggle('e', 'group')" />
+                            <span><i class="fas fa-folder me-1"></i> Grup Dropdown</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Block Menu Mandiri -->
+                <div id="eBlockMenu">
+                    <div class="form-field-group">
+                        <label class="form-field-label">Pilih Menu Navigasi <span style="color:#ef4444;">*</span></label>
+                        <select id="eMenu" class="form-field-select" onchange="handleEditMenuSelectionChange(this.value)">
+                            <option value="">-- Pilih Menu --</option>
+                        </select>
+                    </div>
+                    <div class="form-field-group" id="groupEditMenuNote">
+                        <label class="form-field-label text-muted small">Catatan Menu</label>
+                        <textarea id="eMenuNote" class="form-field-input bg-light" rows="2" disabled placeholder="Pilih menu di atas untuk melihat catatan..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Block Grup Dropdown -->
+                <div id="eBlockGroup" style="display: none;">
+                    <div class="form-field-group">
+                        <label class="form-field-label">Pilih Grup Menu <span style="color:#ef4444;">*</span></label>
+                        <select id="eGroup" class="form-field-select" onchange="handleEditGroupSelectionChange(this.value)">
+                            <option value="">-- Pilih Grup --</option>
+                        </select>
+                    </div>
+                    <div class="form-field-group">
+                        <label class="form-field-label text-muted small">Daftar Sub-menu dalam Grup Ini</label>
+                        <div id="eGroupPreview" class="p-2 bg-light rounded border text-muted small" style="min-height: 42px;">
+                            Pilih grup di atas untuk melihat daftar sub-menu...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-field-group">
+                    <label class="form-field-label">Urutan Tampilan pada Peran Ini <span style="color:#ef4444;">*</span></label>
+                    <input type="number" id="eOrder" class="form-field-input" value="1" min="1" required />
+                    <small class="text-muted" style="font-size:11px;">Menentukan posisi urutan item ini di sidebar untuk peran tersebut (1, 2, 3, dst).</small>
+                </div>
+
+                <div class="form-field-group" style="margin-top:12px;">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.8rem; font-weight:600;">
+                        <input type="checkbox" id="eActive" style="width:16px; height:16px;" checked />
+                        <span>Status Izin Aktif (Tampilkan di Sidebar Pengguna)</span>
+                    </label>
+                </div>
+            </div>
+            <div class="admin-modal-foot">
+                <button type="button" class="btn-secondary-admin" onclick="AdminModal.close('modalEdit')">Batal</button>
+                <button type="submit" class="btn-primary-admin" id="btnSaveEdit">Perbarui</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+    </div> <!-- Close outer col-12 -->
+</div> <!-- Close outer row -->
+
+@section Scripts {
+<script>
+    var dtMenuRoles = null;
+    var cachedMenus = [];
+    var cachedRoles = [];
+    var cachedGroups = [];
+
+    function renderMenuRolesTable(data) {
+        if ($.fn.DataTable.isDataTable('#tableMenuRoles')) {
+            $('#tableMenuRoles').DataTable().destroy();
+        }
+        dtMenuRoles = $('#tableMenuRoles').DataTable({
+            data: data || [],
+            pageLength: 10,
+            lengthMenu: [
+                [10, 25, 50, 100, -1],
+                [10, 25, 50, 100, "Semua"]
+            ],
+            columns: [
+                {
+                    data: null,
+                    className: "text-center fw-bold text-muted",
+                    render: function (data, type, row, meta) {
+                        return meta.row + 1;
+                    }
+                },
+                {
+                    data: 'orderIndex',
+                    className: "text-center fw-bold",
+                    render: function (data) {
+                        return `<span class="badge bg-light text-dark border px-2 py-1" style="font-size:12px; font-weight:700;">${data || 0}</span>`;
+                    }
+                },
+                {
+                    data: 'roleName',
+                    render: function (data, type, mr) {
+                        var role = data || 'Role #' + mr.roleId;
+                        return `<span class="status-pill pill-role">${escHtml(role)}</span>`;
+                    }
+                },
+                {
+                    data: 'targetType',
+                    render: function (data) {
+                        if (data === 'group') {
+                            return `<span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1"><i class="fas fa-folder me-1"></i>Grup Dropdown</span>`;
+                        }
+                        return `<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1"><i class="fas fa-link me-1"></i>Menu Mandiri</span>`;
+                    }
+                },
+                {
+                    data: null,
+                    render: function (data, type, mr) {
+                        if (mr.targetType === 'group') {
+                            var gName = mr.groupName || 'Grup #' + mr.groupId;
+                            var gIcon = mr.groupIcon || 'fas fa-folder';
+                            var subs = mr.subMenus || [];
+                            var subHtml = '';
+                            if (subs.length > 0) {
+                                subHtml = '<div class="mt-1 d-flex flex-wrap">';
+                                subs.forEach(function (s) {
+                                    subHtml += `<span class="badge-subitem"><i class="${s.icon || 'fas fa-circle-dot'}"></i> ${escHtml(s.label)}</span>`;
+                                });
+                                subHtml += '</div>';
+                            } else {
+                                subHtml = '<div class="text-muted small mt-1"><em>(Belum ada sub-menu di dalam grup ini)</em></div>';
+                            }
+                            return `<div>
+                                <i class="${gIcon} text-primary me-1"></i>
+                                <strong style="color:#0f172a;">${escHtml(gName)}</strong>
+                                <span class="badge bg-light text-muted border ms-2" style="font-size:11px;">${subs.length} Sub-menu</span>
+                                ${subHtml}
+                            </div>`;
+                        } else {
+                            var mLabel = mr.menuLabel || 'Menu #' + mr.menuId;
+                            var mUrl = mr.menuUrl || '';
+                            var mIcon = mr.menuIcon || 'fas fa-circle';
+                            return `<div>
+                                <i class="${mIcon} text-secondary me-1"></i>
+                                <strong style="color:#0f172a;">${escHtml(mLabel)}</strong>
+                                <div class="text-muted small">${escHtml(mUrl)}</div>
+                            </div>`;
+                        }
+                    }
+                },
+                {
+                    data: 'isActive',
+                    render: function (data) {
+                        return data !== false
+                            ? '<span class="status-pill pill-active"><span class="dot-indicator"></span>Aktif</span>'
+                            : '<span class="status-pill pill-inactive"><span class="dot-indicator"></span>Nonaktif</span>';
+                    }
+                },
+                {
+                    data: 'id',
+                    orderable: false,
+                    className: "text-end",
+                    render: function (data, type, mr) {
+                        var role = mr.roleName || 'Role #' + mr.roleId;
+                        var targetName = mr.targetType === 'group' ? (mr.groupName || 'Grup') : (mr.menuLabel || 'Menu');
+                        return `
+                            <button type="button" class="btn-table-action btn-table-edit" onclick="openEditModal(${data})">
+                                <i class="fas fa-pen"></i> Edit
+                            </button>
+                            <button type="button" class="btn-table-action btn-table-del" onclick="delMenuRole(${data}, '${escHtml(role)}', '${escHtml(targetName)}')">
+                                <i class="fas fa-trash"></i> Hapus
+                            </button>
+                        `;
+                    }
+                }
+            ]
+        });
+    }
+
+    function loadMenuRoles() {
+        $.ajax({
+            url: API_BASE_URL + '/menuroles',
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                renderMenuRolesTable(data || []);
+            },
+            error: function () {
+                AdminToast.error('Gagal mengambil data otorisasi menu');
+                renderMenuRolesTable([]);
+            }
+        });
+    }
+
+    function ensureData(callback) {
+        var pRoles = cachedRoles.length > 0 ? Promise.resolve(cachedRoles) : $.ajax({
+            url: API_BASE_URL + '/roles',
+            type: 'GET',
+            dataType: 'json'
+        }).then(function (roles) {
+            cachedRoles = roles || [];
+            return cachedRoles;
+        });
+
+        var pMenus = cachedMenus.length > 0 ? Promise.resolve(cachedMenus) : $.ajax({
+            url: API_BASE_URL + '/menus',
+            type: 'GET',
+            dataType: 'json'
+        }).then(function (menus) {
+            cachedMenus = menus || [];
+            return cachedMenus;
+        });
+
+        var pGroups = cachedGroups.length > 0 ? Promise.resolve(cachedGroups) : $.ajax({
+            url: API_BASE_URL + '/groups',
+            type: 'GET',
+            dataType: 'json'
+        }).then(function (groups) {
+            cachedGroups = groups || [];
+            return cachedGroups;
+        });
+
+        Promise.all([pRoles, pMenus, pGroups]).then(function () {
+            if (callback) callback();
+        });
+    }
+
+    window.handleTargetTypeToggle = function (prefix, type) {
+        if (type === 'group') {
+            $('#' + prefix + 'BlockMenu').hide();
+            $('#' + prefix + 'BlockGroup').show();
+            $('#' + prefix + 'Menu').prop('required', false);
+            $('#' + prefix + 'Group').prop('required', true);
+        } else {
+            $('#' + prefix + 'BlockGroup').hide();
+            $('#' + prefix + 'BlockMenu').show();
+            $('#' + prefix + 'Group').prop('required', false);
+            $('#' + prefix + 'Menu').prop('required', true);
+        }
+    };
+
+    window.handleMenuSelectionChange = function (menuId) {
+        if (!menuId) {
+            $('#cMenuNote').val('');
+            return;
+        }
+        var m = cachedMenus.find(function (x) { return x.id == menuId; });
+        if (m && m.note) {
+            $('#cMenuNote').val(m.note);
+        } else {
+            $('#cMenuNote').val('Tidak ada catatan khusus untuk menu ini.');
+        }
+    };
+
+    window.handleEditMenuSelectionChange = function (menuId) {
+        if (!menuId) {
+            $('#eMenuNote').val('');
+            return;
+        }
+        var m = cachedMenus.find(function (x) { return x.id == menuId; });
+        if (m && m.note) {
+            $('#eMenuNote').val(m.note);
+        } else {
+            $('#eMenuNote').val('Tidak ada catatan khusus untuk menu ini.');
+        }
+    };
+
+    window.handleGroupSelectionChange = function (groupId) {
+        var $preview = $('#cGroupPreview');
+        if (!groupId) {
+            $preview.html('Pilih grup di atas untuk melihat daftar sub-menu...');
+            return;
+        }
+        var g = cachedGroups.find(function (x) { return x.id == groupId; });
+        if (g && Array.isArray(g.items) && g.items.length > 0) {
+            var html = '<div class="d-flex flex-wrap gap-1">';
+            g.items.forEach(function (it) {
+                html += `<span class="badge-subitem"><i class="${it.menuIcon || 'fas fa-circle-dot'}"></i> ${escHtml(it.menuLabel)}</span>`;
+            });
+            html += '</div>';
+            $preview.html(html);
+        } else {
+            $preview.html('<span class="text-warning"><i class="fas fa-triangle-exclamation me-1"></i> Grup ini belum memiliki sub-menu. Anda dapat menambahkan sub-menu di halaman Kelola Grup Menu.</span>');
+        }
+    };
+
+    window.handleEditGroupSelectionChange = function (groupId) {
+        var $preview = $('#eGroupPreview');
+        if (!groupId) {
+            $preview.html('Pilih grup di atas untuk melihat daftar sub-menu...');
+            return;
+        }
+        var g = cachedGroups.find(function (x) { return x.id == groupId; });
+        if (g && Array.isArray(g.items) && g.items.length > 0) {
+            var html = '<div class="d-flex flex-wrap gap-1">';
+            g.items.forEach(function (it) {
+                html += `<span class="badge-subitem"><i class="${it.menuIcon || 'fas fa-circle-dot'}"></i> ${escHtml(it.menuLabel)}</span>`;
+            });
+            html += '</div>';
+            $preview.html(html);
+        } else {
+            $preview.html('<span class="text-warning"><i class="fas fa-triangle-exclamation me-1"></i> Grup ini belum memiliki sub-menu.</span>');
+        }
+    };
+
+    window.openCreateModal = function () {
+        $('#formCreate')[0].reset();
+        $('input[name="cTargetType"][value="menu"]').prop('checked', true);
+        handleTargetTypeToggle('c', 'menu');
+        $('#cOrder').val(1);
+        $('#cActive').prop('checked', true);
+        $('#cMenuNote').val('');
+        $('#cGroupPreview').html('Pilih grup di atas untuk melihat daftar sub-menu...');
+
+        ensureData(function () {
+            var sRole = $('#cRole').empty().append('<option value="">-- Pilih Peran --</option>');
+            cachedRoles.forEach(function (r) {
+                sRole.append(`<option value="${r.id}">${escHtml(r.displayName || r.name)}</option>`);
+            });
+
+            var sMenu = $('#cMenu').empty().append('<option value="">-- Pilih Menu --</option>');
+            cachedMenus.forEach(function (m) {
+                var noteLabel = m.note ? ` [Note: ${m.note}]` : '';
+                sMenu.append(`<option value="${m.id}">${escHtml(m.label || m.namaMenu)} (${escHtml(m.routeUrl || m.url)})${escHtml(noteLabel)}</option>`);
+            });
+
+            var sGroup = $('#cGroup').empty().append('<option value="">-- Pilih Grup --</option>');
+            cachedGroups.forEach(function (g) {
+                var count = (g.items && g.items.length) || 0;
+                sGroup.append(`<option value="${g.id}">${escHtml(g.name)} (${count} sub-menu)</option>`);
+            });
+
+            AdminModal.open('modalCreate');
+        });
+    };
+
+    window.submitCreate = function () {
+        var targetType = $('input[name="cTargetType"]:checked').val() || 'menu';
+        var roleId = $('#cRole').val();
+        if (!roleId) {
+            AdminToast.error('Pilih peran terlebih dahulu');
+            return;
+        }
+
+        var fd = new FormData();
+        fd.append('RoleId', roleId);
+        fd.append('TargetType', targetType);
+        fd.append('OrderIndex', $('#cOrder').val() || 1);
+        fd.append('IsActive', $('#cActive').is(':checked'));
+
+        if (targetType === 'group') {
+            var groupId = $('#cGroup').val();
+            if (!groupId) {
+                AdminToast.error('Pilih grup menu terlebih dahulu');
+                return;
+            }
+            fd.append('GroupId', groupId);
+        } else {
+            var menuId = $('#cMenu').val();
+            if (!menuId) {
+                AdminToast.error('Pilih menu navigasi terlebih dahulu');
+                return;
+            }
+            fd.append('MenuId', menuId);
+        }
+
+        $('#btnSaveCreate').prop('disabled', true).text('Menyimpan...');
+
+        $.ajax({
+            url: API_BASE_URL + '/menuroles',
+            type: 'POST',
+            data: fd,
+            processData: false,
+            contentType: false,
+            success: function () {
+                $('#btnSaveCreate').prop('disabled', false).text('Berikan Izin');
+                AdminModal.close('modalCreate');
+                AdminToast.success('Izin akses menu/grup berhasil diberikan');
+                loadMenuRoles();
+            },
+            error: function (xhr) {
+                $('#btnSaveCreate').prop('disabled', false).text('Berikan Izin');
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Gagal menyimpan izin menu/grup';
+                AdminToast.error(msg);
+            }
+        });
+    };
+
+    window.openEditModal = function (id) {
+        ensureData(function () {
+            var sRole = $('#eRole').empty().append('<option value="">-- Pilih Peran --</option>');
+            cachedRoles.forEach(function (r) {
+                sRole.append(`<option value="${r.id}">${escHtml(r.displayName || r.name)}</option>`);
+            });
+
+            var sMenu = $('#eMenu').empty().append('<option value="">-- Pilih Menu --</option>');
+            cachedMenus.forEach(function (m) {
+                var noteLabel = m.note ? ` [Note: ${m.note}]` : '';
+                sMenu.append(`<option value="${m.id}">${escHtml(m.label || m.namaMenu)} (${escHtml(m.routeUrl || m.url)})${escHtml(noteLabel)}</option>`);
+            });
+
+            var sGroup = $('#eGroup').empty().append('<option value="">-- Pilih Grup --</option>');
+            cachedGroups.forEach(function (g) {
+                var count = (g.items && g.items.length) || 0;
+                sGroup.append(`<option value="${g.id}">${escHtml(g.name)} (${count} sub-menu)</option>`);
+            });
+
+            $.ajax({
+                url: API_BASE_URL + '/menuroles/' + id,
+                type: 'GET',
+                dataType: 'json',
+                success: function (mr) {
+                    $('#editId').val(mr.id || id);
+                    $('#eRole').val(mr.roleId);
+                    $('#eOrder').val(mr.orderIndex || 1);
+                    $('#eActive').prop('checked', mr.isActive !== false);
+
+                    var tType = mr.targetType === 'group' ? 'group' : 'menu';
+                    $(`input[name="eTargetType"][value="${tType}"]`).prop('checked', true);
+                    handleTargetTypeToggle('e', tType);
+
+                    if (tType === 'group') {
+                        $('#eGroup').val(mr.groupId || '');
+                        handleEditGroupSelectionChange(mr.groupId);
+                    } else {
+                        $('#eMenu').val(mr.menuId || '');
+                        handleEditMenuSelectionChange(mr.menuId);
+                    }
+
+                    AdminModal.open('modalEdit');
+                },
+                error: function () {
+                    AdminToast.error('Gagal mengambil data detail otorisasi menu');
+                }
+            });
+        });
+    };
+
+    window.submitEdit = function () {
+        var id = $('#editId').val();
+        var targetType = $('input[name="eTargetType"]:checked').val() || 'menu';
+        var roleId = $('#eRole').val();
+        if (!roleId) {
+            AdminToast.error('Pilih peran terlebih dahulu');
+            return;
+        }
+
+        var fd = new FormData();
+        fd.append('Id', id);
+        fd.append('RoleId', roleId);
+        fd.append('TargetType', targetType);
+        fd.append('OrderIndex', $('#eOrder').val() || 1);
+        fd.append('IsActive', $('#eActive').is(':checked'));
+
+        if (targetType === 'group') {
+            var groupId = $('#eGroup').val();
+            if (!groupId) {
+                AdminToast.error('Pilih grup menu terlebih dahulu');
+                return;
+            }
+            fd.append('GroupId', groupId);
+        } else {
+            var menuId = $('#eMenu').val();
+            if (!menuId) {
+                AdminToast.error('Pilih menu navigasi terlebih dahulu');
+                return;
+            }
+            fd.append('MenuId', menuId);
+        }
+
+        $('#btnSaveEdit').prop('disabled', true).text('Menyimpan...');
+
+        $.ajax({
+            url: API_BASE_URL + '/menuroles/' + id,
+            type: 'POST',
+            data: fd,
+            processData: false,
+            contentType: false,
+            success: function () {
+                $('#btnSaveEdit').prop('disabled', false).text('Perbarui');
+                AdminModal.close('modalEdit');
+                AdminToast.success('Otorisasi menu/grup berhasil diperbarui');
+                loadMenuRoles();
+            },
+            error: function (xhr) {
+                $('#btnSaveEdit').prop('disabled', false).text('Perbarui');
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Gagal memperbarui otorisasi menu/grup';
+                AdminToast.error(msg);
+            }
+        });
+    };
+
+    window.delMenuRole = function (id, roleName, targetName) {
+        if (confirm(`Hapus izin "${targetName}" untuk peran "${roleName}"?`)) {
+            $.ajax({
+                url: API_BASE_URL + '/menuroles/' + id,
+                type: 'DELETE',
+                dataType: 'json',
+                success: function () {
+                    AdminToast.success('Izin akses telah dihapus');
+                    loadMenuRoles();
+                },
+                error: function () {
+                    AdminToast.error('Gagal menghapus izin');
+                }
+            });
+        }
+    };
+
+    $(function () {
+        loadMenuRoles();
+    });
+</script>
+}

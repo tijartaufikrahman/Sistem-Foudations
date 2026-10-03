@@ -1,0 +1,204 @@
+@{
+    Layout = "_PublicLayout";
+    ViewData["Title"] = "Status Pembayaran";
+    var invoice = ViewData["InvoiceNumber"] as string;
+}
+
+<style>
+    .payment-status-card {
+        background: #ffffff;
+    }
+    .payment-instruction-box {
+        border: 1px solid rgba(13, 148, 136, 0.2);
+    }
+    .status-icon-lg {
+        font-size: 64px;
+    }
+</style>
+
+<div class="row">
+    <div class="col-12 px-0">
+        <div class="container py-5">
+            <div class="row">
+                <div class="col-md-8 mx-auto col-lg-6 text-center">
+                    
+                    <div id="loading" class="py-5">
+                        <div class="spinner-border text-teal" role="status"></div>
+                        <p class="mt-3 text-muted">Memuat data transaksi...</p>
+                    </div>
+                    
+                    <div id="statusContent" style="display: none;" class="bg-white rounded-4 shadow-sm p-4 p-md-5 payment-status-card">
+                        <div id="iconArea" class="mb-4">
+                            <!-- Icon disisipkan via JS -->
+                        </div>
+                        
+                        <h3 id="statusTitle" class="fw-bold mb-2">Status Pembayaran</h3>
+                        <p id="statusDesc" class="text-muted mb-4">Mohon selesaikan pembayaran Anda.</p>
+                        
+                        <div class="bg-light rounded-3 p-4 mb-4 text-start">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">No. Tagihan</span>
+                                <span class="fw-semibold text-dark font-monospace">@invoice</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Campaign</span>
+                                <span id="campName" class="fw-semibold text-dark text-end" style="max-width: 60%; display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;">-</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Nama Donatur</span>
+                                <span id="dName" class="fw-semibold text-dark">-</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2" id="rowPaidAt" style="display:none;">
+                                <span class="text-muted">Waktu Pembayaran</span>
+                                <span id="dPaidAt" class="fw-semibold text-dark">-</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="text-muted">Total Pembayaran</span>
+                                <span id="totalAmount" class="fw-bold fs-4 text-teal" style="color: var(--brand-teal-dark);">Rp 0</span>
+                            </div>
+
+                            <!-- Payment Instruction Card (Only shown if pending) -->
+                            <div id="paymentInstructionBox" style="display:none;" class="p-3 bg-white rounded-3 mt-3 payment-instruction-box">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="small fw-semibold text-muted">Nomor Virtual Account</span>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary" style="font-size:10px;">BCA / Mandiri / BNI</span>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between bg-light p-2 rounded-2">
+                                    <span class="fw-bold font-monospace fs-5 text-dark" id="vaNumberDisplay">8801208123456789</span>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnCopyVA" title="Salin nomor VA" onclick="copyVANumber()">
+                                        <i class="fas fa-copy me-1"></i> Salin
+                                    </button>
+                                </div>
+                                <p class="small text-muted mt-2 mb-0" style="font-size:11px;">
+                                    <i class="fas fa-circle-info text-teal me-1"></i> Transfer nominal tepat sesuai total pembayaran di atas. Pembayaran akan terverifikasi otomatis.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div id="actionArea">
+                            <button type="button" class="btn btn-primary-custom mb-2 w-100" onclick="navigateToLanding()">
+                                <i class="fas fa-house me-1"></i> Kembali ke Beranda
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary w-100" id="btnPrintReceipt" style="display:none;" onclick="window.print()">
+                                <i class="fas fa-print me-1"></i> Cetak Bukti Donasi
+                            </button>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var invoiceNum = '@invoice';
+        var currentDonation = null;
+        
+        function navigateToLanding() {
+            window.location.href = '/';
+        }
+
+        function copyVANumber() {
+            var va = $('#vaNumberDisplay').text();
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(va).then(function() {
+                    alert('Nomor Virtual Account berhasil disalin: ' + va);
+                }).catch(function() {
+                    prompt('Salin nomor Virtual Account:', va);
+                });
+            } else {
+                prompt('Salin nomor Virtual Account:', va);
+            }
+        }
+
+        function simulatePayment() {
+            if (!currentDonation || !currentDonation.id) return;
+            if (!confirm('Lanjutkan simulasi pelunasan donasi ini? Status donasi dan dana terkumpul di sistem akan diperbarui secara otomatis.')) return;
+            
+            var $btn = $('#btnSimulatePayment');
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Memproses Pelunasan...');
+
+            $.ajax({
+                url: API_BASE_URL + '/donations/' + currentDonation.id + '/webhook',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ PaymentStatus: 'PAID' }),
+                success: function() {
+                    alert('Pembayaran berhasil dikonfirmasi oleh sistem!');
+                    window.location.reload();
+                },
+                error: function() {
+                    alert('Gagal memproses simulasi pembayaran.');
+                    $btn.prop('disabled', false).html('<i class="fas fa-check-double me-2"></i> Bayar Sekarang (Simulasi Pengujian)');
+                }
+            });
+        }
+
+        $(function() {
+            $.ajax({
+                url: API_BASE_URL + '/donations/invoice/' + invoiceNum,
+                type: 'GET',
+                dataType: 'json',
+                success: function(d) {
+                    $('#loading').hide();
+                    $('#statusContent').show();
+                    
+                    currentDonation = d;
+                    
+                    $('#campName').text(d.campaign ? d.campaign.title : '-');
+                    $('#dName').text(d.isAnonymous ? 'Hamba Allah' : (d.donorName || 'Donatur'));
+                    $('#totalAmount').text(formatRupiah(d.totalAmount));
+                    
+                    var status = (d.paymentStatus || d.status || 'PENDING').toUpperCase();
+                    var $icon = $('#iconArea');
+                    var $title = $('#statusTitle');
+                    var $desc = $('#statusDesc');
+                    
+                    if (status === 'PENDING') {
+                        $icon.html('<i class="fas fa-clock-rotate-left text-warning status-icon-lg"></i>');
+                        $title.text('Menunggu Pembayaran');
+                        $desc.text('Mohon segera selesaikan pembayaran Anda sebelum batas waktu berakhir.');
+                        $('#paymentInstructionBox').show();
+                        
+                        // Action button: Simulated Payment that calls backend webhook
+                        $('#actionArea').prepend(`
+                            <button type="button" class="btn btn-success w-100 mb-2 fw-bold shadow-sm" id="btnSimulatePayment" onclick="simulatePayment()">
+                                <i class="fas fa-check-double me-2"></i> Bayar Sekarang (Simulasi Pengujian)
+                            </button>
+                        `);
+                    } 
+                    else if (status === 'PAID') {
+                        $icon.html('<i class="fas fa-circle-check text-success status-icon-lg"></i>');
+                        $title.text('Pembayaran Berhasil!');
+                        $desc.text('Alhamdulillah, donasi Anda telah kami terima dan diverifikasi. Terima kasih orang baik!');
+                        $('#btnPrintReceipt').show();
+                        
+                        if (d.paidAt) {
+                            $('#rowPaidAt').show();
+                            $('#dPaidAt').text(new Date(d.paidAt).toLocaleString('id-ID'));
+                        }
+                    }
+                    else {
+                        $icon.html('<i class="fas fa-circle-xmark text-danger status-icon-lg"></i>');
+                        $title.text('Pembayaran Dibatalkan / Kadaluarsa');
+                        $desc.text('Waktu pembayaran telah habis atau transaksi dibatalkan.');
+                        
+                        if (d.campaign) {
+                            $('#actionArea').prepend(`
+                                <a href="/Donate/${d.campaign.slug}" class="btn btn-outline-primary w-100 mb-2 fw-bold">
+                                    <i class="fas fa-redo me-2"></i> Coba Donasi Lagi
+                                </a>
+                            `);
+                        }
+                    }
+                },
+                error: function() {
+                    $('#loading').html('<div class="alert alert-danger">Data transaksi tidak ditemukan.</div>');
+                }
+            });
+        });
+    </script>
+}

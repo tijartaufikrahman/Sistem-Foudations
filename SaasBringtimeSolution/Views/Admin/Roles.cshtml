@@ -1,0 +1,377 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Kelola Peran (Roles)";
+}
+
+<style>
+    /* Scoped styling for Admin Roles adhering to aturan_styling.txt */
+    .roles-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        width: 100%;
+    }
+
+    .role-code-badge {
+        font-family: monospace;
+        font-size: 11px;
+        background: #f1f5f9;
+        color: #475569;
+        padding: 3px 8px;
+        border-radius: 4px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .helper-banner {
+        background: #f0fdfa;
+        border: 1px solid #ccfbf1;
+        border-radius: 10px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #0f766e;
+        font-size: 13px;
+    }
+
+    .helper-banner i {
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+</style>
+
+<div class="roles-container">
+
+    <!-- Breadcrumb Bar: Pojok Kanan Atas Mandiri -->
+    <div class="content-breadcrumb-bar">
+        <div class="breadcrumb-nav" id="pageBreadcrumb">
+            <span class="breadcrumb-current">Kelola Roles</span>
+            <span class="breadcrumb-separator">/</span>
+        </div>
+    </div>
+
+    <!-- Action Bar: Tombol di bawah Breadcrumb -->
+    <div class="content-action-bar">
+        <button type="button" class="btn-primary-admin" onclick="openCreateModal()">
+            <i class="fas fa-plus"></i> Tambah Peran Baru
+        </button>
+    </div>
+
+    <div class="helper-banner">
+        <i class="fas fa-circle-info"></i>
+        <div>
+            Halaman ini khusus untuk mengelola <strong>Master Definisi Peran</strong> (Nama, Kode, Deskripsi). Untuk memasangkan peran ini ke pengguna tertentu, silakan buka menu <strong><a href="/UserRoles" style="color:#0f766e; font-weight:bold; text-decoration:underline;">User Roles</a></strong>.
+        </div>
+    </div>
+
+    <div class="admin-card">
+        <div class="table-responsive p-3">
+            <table class="table table-hover align-middle w-100" id="tableRoles">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 50px; text-align:center;">NO</th>
+                        <th>KODE PERAN</th>
+                        <th>NAMA TAMPILAN</th>
+                        <th>DESKRIPSI</th>
+                        <th style="text-align: right; width: 210px;">AKSI</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal Tambah Peran -->
+<div class="admin-modal-backdrop" id="modalCreate">
+    <div class="admin-modal-card">
+        <div class="admin-modal-head">
+            <h4 class="admin-modal-title">Tambah Peran Baru</h4>
+            <button type="button" class="btn-modal-close" onclick="AdminModal.close('modalCreate')">&times;</button>
+        </div>
+        <form id="formCreate" onsubmit="event.preventDefault(); submitCreate();">
+            <div class="admin-modal-content">
+                <div class="form-field-group">
+                    <label class="form-field-label">Kode Peran (Huruf kecil & underscore) <span style="color:#ef4444;">*</span></label>
+                    <input type="text" id="cName" class="form-field-input" placeholder="contoh: partner_staff" required />
+                </div>
+                <div class="form-field-group">
+                    <label class="form-field-label">Nama Tampilan (Display Name) <span style="color:#ef4444;">*</span></label>
+                    <input type="text" id="cDisplay" class="form-field-input" placeholder="contoh: Staf Mitra / Operasional" required />
+                </div>
+                <div class="form-field-group">
+                    <label class="form-field-label">Deskripsi Otoritas</label>
+                    <textarea id="cDesc" class="form-field-textarea" rows="3" placeholder="Wewenang akses pengguna dengan peran ini..."></textarea>
+                </div>
+            </div>
+            <div class="admin-modal-foot">
+                <button type="button" class="btn-secondary-admin" onclick="AdminModal.close('modalCreate')">Batal</button>
+                <button type="submit" class="btn-primary-admin" id="btnSaveCreate">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Edit Peran -->
+<div class="admin-modal-backdrop" id="modalEdit">
+    <div class="admin-modal-card">
+        <div class="admin-modal-head">
+            <h4 class="admin-modal-title">Edit Data Peran</h4>
+            <button type="button" class="btn-modal-close" onclick="AdminModal.close('modalEdit')">&times;</button>
+        </div>
+        <form id="formEdit" onsubmit="event.preventDefault(); submitEdit();">
+            <input type="hidden" id="editId" />
+            <div class="admin-modal-content">
+                <div class="form-field-group">
+                    <label class="form-field-label">Kode Peran <span style="color:#ef4444;">*</span></label>
+                    <input type="text" id="eName" class="form-field-input" required />
+                </div>
+                <div class="form-field-group">
+                    <label class="form-field-label">Nama Tampilan (Display Name) <span style="color:#ef4444;">*</span></label>
+                    <input type="text" id="eDisplay" class="form-field-input" required />
+                </div>
+                <div class="form-field-group">
+                    <label class="form-field-label">Deskripsi Otoritas</label>
+                    <textarea id="eDesc" class="form-field-textarea" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="admin-modal-foot">
+                <button type="button" class="btn-secondary-admin" onclick="AdminModal.close('modalEdit')">Batal</button>
+                <button type="submit" class="btn-primary-admin" id="btnSaveEdit">Perbarui</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    var dtRoles = null;
+    var allRoles = [];
+
+    function renderRoleTable(roles) {
+        if ($.fn.DataTable.isDataTable('#tableRoles')) {
+            $('#tableRoles').DataTable().destroy();
+        }
+        dtRoles = $('#tableRoles').DataTable({
+            data: roles || [],
+            pageLength: 10,
+            lengthMenu: [
+                [10, 25, 50, 100, -1],
+                [10, 25, 50, 100, "Semua"]
+            ],
+            columns: [
+                {
+                    data: null,
+                    className: "text-center fw-bold text-muted",
+                    render: function (data, type, row, meta) {
+                        return meta.row + 1;
+                    }
+                },
+                {
+                    data: 'name',
+                    render: function (data) {
+                        return `<span class="role-code-badge">${escHtml(data)}</span>`;
+                    }
+                },
+                {
+                    data: 'displayName',
+                    render: function (data, type, row) {
+                        return `<span class="status-pill pill-role">${escHtml(data || row.name)}</span>`;
+                    }
+                },
+                {
+                    data: 'description',
+                    render: function (data) {
+                        return `<span style="color:#64748b;">${escHtml(data || '-')}</span>`;
+                    }
+                },
+                {
+                    data: 'id',
+                    orderable: false,
+                    className: "text-end",
+                    render: function (data, type, row) {
+                        return `
+                            <a href="/UserRoles" class="btn-table-action" style="color:#0f766e; border-color:#ccfbf1; background:#f0fdfa; text-decoration:none;" title="Lihat penugasan peran ini di User Roles">
+                                <i class="fas fa-user-gear"></i> Anggota
+                            </a>
+                            <button type="button" class="btn-table-action btn-table-edit" onclick="openEdit(${data})">
+                                <i class="fas fa-pen"></i> Edit
+                            </button>
+                            <button type="button" class="btn-table-action btn-table-del" onclick="delRole(${data}, '${escHtml(row.displayName || row.name)}')">
+                                <i class="fas fa-trash"></i> Hapus
+                            </button>
+                        `;
+                    }
+                }
+            ]
+        });
+    }
+
+    function loadRoles() {
+        $.ajax({
+            url: API_BASE_URL + '/roles',
+            type: 'GET',
+            dataType: 'json',
+            success: function (roles) {
+                allRoles = roles || [];
+                renderRoleTable(allRoles);
+            },
+            error: function () {
+                AdminToast.error('Gagal mengambil data peran');
+                renderRoleTable([]);
+            }
+        });
+    }
+
+    window.openCreateModal = function () {
+        $('#formCreate')[0].reset();
+        AdminModal.open('modalCreate');
+    };
+
+    window.submitCreate = function () {
+        var nameVal = $('#cName').val().trim();
+        var dispVal = $('#cDisplay').val().trim();
+        var descVal = $('#cDesc').val().trim();
+
+        if (!nameVal) {
+            AdminToast.error('Kode peran wajib diisi!');
+            return;
+        }
+        if (!dispVal) {
+            AdminToast.error('Nama tampilan peran wajib diisi!');
+            return;
+        }
+
+        var payload = {
+            name: nameVal,
+            displayName: dispVal,
+            description: descVal ? descVal : null
+        };
+
+        $('#btnSaveCreate').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Menyimpan...');
+
+        $.ajax({
+            url: API_BASE_URL + '/roles',
+            type: 'POST',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function (res) {
+                $('#btnSaveCreate').prop('disabled', false).text('Simpan');
+                AdminModal.close('modalCreate');
+                AdminToast.success(res.message || 'Peran berhasil ditambahkan');
+                loadRoles();
+            },
+            error: function (xhr) {
+                $('#btnSaveCreate').prop('disabled', false).text('Simpan');
+                var msg = 'Gagal menyimpan peran';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    } else if (xhr.responseJSON.errors) {
+                        var errList = [];
+                        for (var k in xhr.responseJSON.errors) {
+                            errList.push(xhr.responseJSON.errors[k].join(', '));
+                        }
+                        msg = errList.join('; ');
+                    }
+                }
+                AdminToast.error(msg);
+            }
+        });
+    };
+
+    window.openEdit = function (id) {
+        var r = allRoles.find(function (x) { return x.id === id; });
+        if (!r) return;
+
+        $('#editId').val(r.id);
+        $('#eName').val(r.name);
+        $('#eDisplay').val(r.displayName);
+        $('#eDesc').val(r.description || '');
+
+        AdminModal.open('modalEdit');
+    };
+
+    window.submitEdit = function () {
+        var id = parseInt($('#editId').val());
+        var nameVal = $('#eName').val().trim();
+        var dispVal = $('#eDisplay').val().trim();
+        var descVal = $('#eDesc').val().trim();
+
+        if (!nameVal) {
+            AdminToast.error('Kode peran wajib diisi!');
+            return;
+        }
+        if (!dispVal) {
+            AdminToast.error('Nama tampilan peran wajib diisi!');
+            return;
+        }
+
+        var payload = {
+            id: id,
+            name: nameVal,
+            displayName: dispVal,
+            description: descVal ? descVal : null
+        };
+
+        $('#btnSaveEdit').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Memperbarui...');
+
+        $.ajax({
+            url: API_BASE_URL + '/roles/' + id,
+            type: 'PUT',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function (res) {
+                $('#btnSaveEdit').prop('disabled', false).text('Perbarui');
+                AdminModal.close('modalEdit');
+                AdminToast.success(res.message || 'Data peran berhasil diperbarui');
+                loadRoles();
+            },
+            error: function (xhr) {
+                $('#btnSaveEdit').prop('disabled', false).text('Perbarui');
+                var msg = 'Gagal memperbarui peran';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    } else if (xhr.responseJSON.errors) {
+                        var errList = [];
+                        for (var k in xhr.responseJSON.errors) {
+                            errList.push(xhr.responseJSON.errors[k].join(', '));
+                        }
+                        msg = errList.join('; ');
+                    }
+                }
+                AdminToast.error(msg);
+            }
+        });
+    };
+
+    window.delRole = function (id, name) {
+        if (confirm('Apakah Anda yakin ingin menghapus peran "' + name + '"?')) {
+            $.ajax({
+                url: API_BASE_URL + '/roles/' + id,
+                type: 'DELETE',
+                dataType: 'json',
+                success: function (res) {
+                    AdminToast.success(res && res.message ? res.message : 'Peran berhasil dihapus');
+                    loadRoles();
+                },
+                error: function (xhr) {
+                    var msg = 'Gagal menghapus peran';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    }
+                    AdminToast.error(msg);
+                }
+            });
+        }
+    };
+
+    $(function () {
+        loadRoles();
+    });
+</script>
+}

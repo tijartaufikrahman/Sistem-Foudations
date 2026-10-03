@@ -1,0 +1,440 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Kelola Campaign";
+}
+
+<style>
+    /* Scoped custom style for Foundation Campaigns */
+    .campaign-banner-thumb {
+        width: 44px;
+        height: 44px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+    .campaign-banner-preview-box {
+        display: none;
+        height: 120px;
+        background: #f1f5f9;
+    }
+    .campaign-title-cell {
+        max-width: 220px;
+    }
+    .campaign-progress-bar {
+        height: 4px;
+        width: 90px;
+    }
+</style>
+
+<!-- Outermost View Wrapper adhering to aturan_styling.txt -->
+<div class="row">
+    <div class="col-12">
+
+<!-- Breadcrumb Bar: Pojok Kanan Atas Mandiri -->
+<div class="content-breadcrumb-bar">
+    <div class="breadcrumb-nav" id="pageBreadcrumb">
+        <span class="breadcrumb-current">Kelola Campaign</span>
+        <span class="breadcrumb-separator">/</span>
+    </div>
+</div>
+
+<!-- Action Bar: Tombol di bawah Breadcrumb -->
+<div class="content-action-bar">
+    <button type="button" class="btn-primary-admin" id="btnAdd" onclick="openCreateModal()">
+        <i class="fas fa-plus me-1"></i> Buat Campaign
+    </button>
+</div>
+
+<div class="admin-card">
+    <div class="table-responsive p-3">
+        <table class="table table-hover align-middle w-100" id="tableCampaigns">
+            <thead class="table-light">
+                <tr>
+                    <th style="width:50px; text-align:center;">NO</th>
+                    <th>Judul Program</th>
+                    <th>Kategori</th>
+                    <th>Target Dana</th>
+                    <th>Terkumpul</th>
+                    <th>Status</th>
+                    <th style="text-align: right; width:130px;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Form -->
+<div class="modal fade" id="modalForm" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <form id="formCampaign" onsubmit="event.preventDefault(); submitCampaign();">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="modalTitle">Buat Campaign</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="campaignId" />
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Judul Campaign <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control rounded-3" id="cTitle" placeholder="Contoh: Bantuan Sembako Yatim & Dhuafa" oninput="autoGenerateSlug(this)" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Slug (URL-friendly) <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control rounded-3" id="cSlug" placeholder="bantuan-sembako-yatim-dhuafa" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Kategori <span class="text-danger">*</span></label>
+                            <select class="form-select rounded-3" id="cCategory" required>
+                                <option value="bencana_alam">Bencana Alam</option>
+                                <option value="pendidikan">Pendidikan</option>
+                                <option value="kesehatan">Kesehatan</option>
+                                <option value="yatim">Yatim & Dhuafa</option>
+                                <option value="sosial">Sosial & Kemanusiaan</option>
+                                <option value="infaq">Infaq</option>
+                                <option value="zakat_maal">Zakat Maal</option>
+                                <option value="waqf">Wakaf</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Target Dana (Rp) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control rounded-3" id="cTargetAmount" required min="0" placeholder="50000000" oninput="formatTargetAmount(this)">
+                            <small class="text-teal fw-semibold mt-1 d-block" id="targetAmountFormatted" style="color:#0f766e;">Rp 0</small>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Tanggal Mulai</label>
+                            <input type="date" class="form-control rounded-3" id="cStartDate">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Tanggal Selesai</label>
+                            <input type="date" class="form-control rounded-3" id="cEndDate">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Banner Image URL</label>
+                        <input type="url" class="form-control rounded-3" id="cBannerUrl" placeholder="https://images.unsplash.com/photo-..." oninput="previewBanner(this)">
+                        <div class="mt-2 rounded-3 border overflow-hidden campaign-banner-preview-box" id="bannerPreviewContainer">
+                            <img id="bannerPreviewImg" src="" alt="Banner Preview" style="width:100%; height:100%; object-fit:cover;">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Deskripsi Program <span class="text-danger">*</span></label>
+                        <textarea class="form-control rounded-3" id="cDescription" rows="4" placeholder="Ceritakan latar belakang penggalangan dana dan target penerima manfaat..." required></textarea>
+                    </div>
+                    <div class="form-check form-switch mb-3" id="statusGroup" style="display:none;">
+                        <input class="form-check-input" type="checkbox" role="switch" id="cIsActive" checked>
+                        <label class="form-check-label fw-semibold" for="cIsActive">Aktif (Dapat Menerima Donasi Publik)</label>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0 px-4 pb-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn-primary-admin" id="btnSaveCampaign">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    var foundationId = 0;
+    var campaignsDataTable = null;
+    var allCampaignsList = [];
+
+    function formatTargetAmount(elem) {
+        var val = parseInt($(elem).val()) || 0;
+        $('#targetAmountFormatted').text('Rp ' + val.toLocaleString('id-ID'));
+    }
+
+    function previewBanner(elem) {
+        var url = $(elem).val().trim();
+        if (url) {
+            $('#bannerPreviewImg').attr('src', url);
+            $('#bannerPreviewContainer').show();
+        } else {
+            $('#bannerPreviewContainer').hide();
+        }
+    }
+
+    function autoGenerateSlug(elem) {
+        if (!$('#campaignId').val()) {
+            var slug = $(elem).val().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+            $('#cSlug').val(slug);
+        }
+    }
+
+    function renderCampaignsTable(data) {
+        allCampaignsList = data || [];
+        if ($.fn.DataTable.isDataTable('#tableCampaigns')) {
+            $('#tableCampaigns').DataTable().destroy();
+        }
+
+        campaignsDataTable = $('#tableCampaigns').DataTable({
+            data: allCampaignsList,
+            columns: [
+                {
+                    data: null,
+                    orderable: false,
+                    className: "text-muted",
+                    render: function(data, type, row, meta) {
+                        return meta.row + 1;
+                    }
+                },
+                {
+                    data: 'title',
+                    render: function(data, type, row) {
+                        var img = row.bannerUrl ? `<img src="${escHtml(row.bannerUrl)}" class="campaign-banner-thumb me-2 flex-shrink-0">` : '';
+                        return `<div class="d-flex align-items-center">${img} <div class="fw-semibold text-truncate campaign-title-cell" title="${escHtml(data)}">${escHtml(data)}</div></div>`;
+                    }
+                },
+                {
+                    data: 'category',
+                    render: function(data) {
+                        return data ? `<span class="badge bg-light text-dark border" style="font-size:10.5px;">${escHtml(data.replace('_', ' ').toUpperCase())}</span>` : '-';
+                    }
+                },
+                {
+                    data: 'targetAmount',
+                    render: function(data) {
+                        return 'Rp ' + (data || 0).toLocaleString('id-ID');
+                    }
+                },
+                {
+                    data: 'collectedAmount',
+                    render: function(data, type, row) {
+                        var pct = row.targetAmount > 0 ? Math.min(100, Math.round(((data || 0) / row.targetAmount) * 100)) : 0;
+                        return `
+                            <div class="fw-semibold" style="color:#0f766e;">Rp ${(data || 0).toLocaleString('id-ID')}</div>
+                            <div class="progress mt-1 campaign-progress-bar">
+                                <div class="progress-bar" style="width: ${pct}%; background:#0f766e;"></div>
+                            </div>
+                        `;
+                    }
+                },
+                {
+                    data: 'isActive',
+                    render: function(data) {
+                        return data
+                            ? '<span class="status-pill pill-active"><span class="dot-indicator"></span>Aktif</span>'
+                            : '<span class="status-pill pill-inactive"><span class="dot-indicator"></span>Nonaktif</span>';
+                    }
+                },
+                {
+                    data: 'id',
+                    orderable: false,
+                    className: "text-end",
+                    render: function(data, type, row) {
+                        return `
+                            <div class="d-flex justify-content-end gap-1">
+                                <a href="/Campaign/${escHtml(row.slug)}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-2" title="Lihat Publik"><i class="fas fa-arrow-up-right-from-square"></i></a>
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-2" onclick="openEditCampaign(${data})" title="Edit"><i class="fas fa-edit"></i></button>
+                                <button type="button" class="btn btn-sm btn-outline-danger rounded-2" onclick="deleteCampaign(${data})" title="Hapus"><i class="fas fa-trash"></i></button>
+                            </div>
+                        `;
+                    }
+                }
+            ]
+        });
+    }
+
+    function loadCampaigns() {
+        if (!foundationId || foundationId <= 0) return;
+        $.ajax({
+            url: API_BASE_URL + '/campaigns/foundation/' + foundationId,
+            type: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                renderCampaignsTable(data || []);
+            },
+            error: function() {
+                AdminToast.error('Gagal mengambil daftar program campaign');
+                renderCampaignsTable([]);
+            }
+        });
+    }
+
+    function initFoundationData() {
+        var configuredFid = window.CONFIGURED_FOUNDATION_ID || 0;
+        if (configuredFid > 0) {
+            foundationId = configuredFid;
+            loadCampaigns();
+            return;
+        }
+
+        var currentUser = AuthSession.getUser() || {};
+        var currentUserId = currentUser.id || currentUser.Id || 0;
+        var userFoundId = currentUser.foundationId || currentUser.FoundationId || 0;
+
+        if (userFoundId > 0) {
+            foundationId = userFoundId;
+            loadCampaigns();
+            return;
+        }
+
+        $.ajax({
+            url: API_BASE_URL + '/foundations',
+            type: 'GET',
+            dataType: 'json',
+            success: function(founds) {
+                var list = Array.isArray(founds) ? founds : (founds.data || []);
+                var myFound = (list || []).find(function(f) {
+                    if (f.userId === currentUserId || (f.user && f.user.id === currentUserId)) return true;
+                    if (Array.isArray(f.foundationUsers) && f.foundationUsers.some(function(fu) { return fu.userId === currentUserId; })) return true;
+                    if (Array.isArray(f.userIds) && f.userIds.indexOf(currentUserId) !== -1) return true;
+                    return false;
+                });
+                if (myFound) {
+                    foundationId = myFound.id;
+                    loadCampaigns();
+                } else {
+                    foundationId = 0;
+                    renderCampaignsTable([]);
+                    AdminToast.warning('Akun Anda belum ditautkan ke organisasi/lembaga manapun.');
+                }
+            },
+            error: function() {
+                AdminToast.error('Gagal memuat profil yayasan');
+            }
+        });
+    }
+
+    function openCreateModal() {
+        $('#formCampaign')[0].reset();
+        $('#campaignId').val('');
+        $('#modalTitle').text('Buat Campaign');
+        $('#statusGroup').hide();
+        $('#cIsActive').prop('checked', true);
+        $('#targetAmountFormatted').text('Rp 0');
+        $('#bannerPreviewContainer').hide();
+        $('#modalForm').modal('show');
+    }
+
+    window.openEditCampaign = function(id) {
+        var item = allCampaignsList.find(function(c) { return c.id === id; });
+        if (!item) return;
+
+        $('#campaignId').val(item.id);
+        $('#cTitle').val(item.title || '');
+        $('#cSlug').val(item.slug || '');
+        $('#cCategory').val(item.category || 'bencana_alam');
+        $('#cTargetAmount').val(item.targetAmount || 0);
+        formatTargetAmount($('#cTargetAmount'));
+        
+        if (item.startDate) $('#cStartDate').val(item.startDate.substring(0, 10));
+        else $('#cStartDate').val('');
+        
+        if (item.endDate) $('#cEndDate').val(item.endDate.substring(0, 10));
+        else $('#cEndDate').val('');
+        
+        $('#cBannerUrl').val(item.bannerUrl || '');
+        previewBanner($('#cBannerUrl'));
+        $('#cDescription').val(item.description || '');
+        
+        $('#statusGroup').show();
+        $('#cIsActive').prop('checked', !!item.isActive);
+        
+        $('#modalTitle').text('Edit Campaign');
+        $('#modalForm').modal('show');
+    };
+
+    function submitCampaign() {
+        var id = $('#campaignId').val();
+
+        if (!foundationId || foundationId <= 0) {
+            AdminToast.error('Data yayasan belum terdeteksi. Silakan atur profil yayasan Anda terlebih dahulu.');
+            return;
+        }
+
+        var descriptionVal = $('#cDescription').val().trim();
+        if (!descriptionVal) {
+            AdminToast.error('Deskripsi campaign wajib diisi.');
+            return;
+        }
+
+        var payload = {
+            foundationId: foundationId,
+            title: $('#cTitle').val().trim(),
+            slug: $('#cSlug').val().trim(),
+            category: $('#cCategory').val(),
+            description: descriptionVal,
+            targetAmount: parseFloat($('#cTargetAmount').val()) || 0,
+            bannerUrl: $('#cBannerUrl').val().trim() || null,
+            startDate: $('#cStartDate').val() ? new Date($('#cStartDate').val()).toISOString() : null,
+            endDate: $('#cEndDate').val() ? new Date($('#cEndDate').val()).toISOString() : null,
+            isActive: $('#cIsActive').is(':checked')
+        };
+
+        var method = id ? 'PUT' : 'POST';
+        var url = API_BASE_URL + '/campaigns' + (id ? '/' + id : '');
+        if (id) payload.id = parseInt(id);
+
+        var $btn = $('#btnSaveCampaign');
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...');
+
+        $.ajax({
+            url: url,
+            type: method,
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function(res) {
+                $('#modalForm').modal('hide');
+                $btn.prop('disabled', false).text('Simpan');
+                AdminToast.success(id ? 'Campaign berhasil diperbarui' : 'Campaign berhasil dibuat');
+                loadCampaigns();
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false).text('Simpan');
+                var msg = 'Terjadi kesalahan sistem saat menyimpan campaign.';
+                if (xhr.responseJSON) {
+                    if (typeof xhr.responseJSON.message === 'string' && xhr.responseJSON.message.trim()) {
+                        msg = xhr.responseJSON.message;
+                    } else if (xhr.responseJSON.errors && typeof xhr.responseJSON.errors === 'object') {
+                        var list = [];
+                        for (var k in xhr.responseJSON.errors) {
+                            if (Array.isArray(xhr.responseJSON.errors[k])) {
+                                list.push(xhr.responseJSON.errors[k].join(', '));
+                            } else {
+                                list.push(xhr.responseJSON.errors[k]);
+                            }
+                        }
+                        if (list.length > 0) msg = list.join(' | ');
+                    } else if (typeof xhr.responseJSON.title === 'string') {
+                        msg = xhr.responseJSON.title;
+                    }
+                } else if (xhr.responseText) {
+                    msg = xhr.responseText.substring(0, 150);
+                }
+                AdminToast.error(msg);
+            }
+        });
+    }
+
+    window.deleteCampaign = function(id) {
+        if (!confirm('Yakin ingin menghapus program campaign ini?')) return;
+
+        $.ajax({
+            url: API_BASE_URL + '/campaigns/' + id,
+            type: 'DELETE',
+            dataType: 'json',
+            success: function() {
+                AdminToast.success('Campaign telah dihapus');
+                loadCampaigns();
+            },
+            error: function() {
+                AdminToast.error('Gagal menghapus campaign');
+            }
+        });
+    };
+
+    $(document).ready(function() {
+        initFoundationData();
+    });
+</script>
+}

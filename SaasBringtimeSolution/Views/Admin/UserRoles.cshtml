@@ -1,0 +1,336 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Penugasan Peran (User Roles)";
+}
+
+<style>
+    /* Scoped styling for Admin UserRoles adhering to aturan_styling.txt */
+    .userrole-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        width: 100%;
+    }
+
+    .userrole-id-badge {
+        font-family: monospace;
+        font-size: 11px;
+        background: #f1f5f9;
+        color: #64748b;
+        padding: 2px 8px;
+        border-radius: 4px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .helper-banner {
+        background: #f0fdfa;
+        border: 1px solid #ccfbf1;
+        border-radius: 10px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #0f766e;
+        font-size: 13px;
+    }
+
+    .helper-banner i {
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+</style>
+
+<div class="userrole-container">
+
+    <!-- Breadcrumb Bar: Pojok Kanan Atas Mandiri -->
+    <div class="content-breadcrumb-bar">
+        <div class="breadcrumb-nav" id="pageBreadcrumb">
+            <span class="breadcrumb-current">User Roles</span>
+            <span class="breadcrumb-separator">/</span>
+        </div>
+    </div>
+
+    <!-- Action Bar: Tombol di bawah Breadcrumb -->
+    <div class="content-action-bar">
+        <button type="button" class="btn-primary-admin" onclick="openCreateModal()">
+            <i class="fas fa-plus"></i> Pasangkan Pengguna ke Peran
+        </button>
+    </div>
+
+    <div class="helper-banner">
+        <i class="fas fa-circle-info"></i>
+        <div>
+            Menu <strong>Pengguna</strong> fokus untuk data profil akun, menu <strong>Peran</strong> fokus untuk master hak akses, dan halaman <strong>User Roles</strong> ini berfungsi khusus untuk memetakan atau mencabut hak akses pengguna.
+        </div>
+    </div>
+
+    <div class="admin-card">
+        <div class="table-responsive p-3">
+            <table class="table table-hover align-middle w-100" id="tableUserRoles">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 50px; text-align:center;">NO</th>
+                        <th>PENGGUNA</th>
+                        <th>PERAN YANG DITUGASKAN</th>
+                        <th>TANGGAL PENUGASAN</th>
+                        <th style="text-align: right; width: 120px;">AKSI</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal Tambah Penugasan Peran -->
+<div class="admin-modal-backdrop" id="modalCreate">
+    <div class="admin-modal-card">
+        <div class="admin-modal-head">
+            <h4 class="admin-modal-title">Pasangkan Pengguna ke Peran</h4>
+            <button type="button" class="btn-modal-close" onclick="AdminModal.close('modalCreate')">&times;</button>
+        </div>
+        <form id="formCreate" onsubmit="event.preventDefault(); submitCreate();">
+            <div class="admin-modal-content">
+                <div class="form-field-group">
+                    <label class="form-field-label">Pilih Akun Pengguna <span style="color:#ef4444;">*</span></label>
+                    <select id="cUser" class="form-field-select" required>
+                        <option value="">-- Memuat Pengguna... --</option>
+                    </select>
+                </div>
+                <div class="form-field-group">
+                    <label class="form-field-label">Pilih Peran (Role) <span style="color:#ef4444;">*</span></label>
+                    <select id="cRole" class="form-field-select" required>
+                        <option value="">-- Memuat Peran... --</option>
+                    </select>
+                </div>
+                <small style="color:#64748b; font-size:11px; display:block;">
+                    *Satu pengguna dapat memiliki lebih dari satu peran jika diperlukan wewenang ganda.
+                </small>
+            </div>
+            <div class="admin-modal-foot">
+                <button type="button" class="btn-secondary-admin" onclick="AdminModal.close('modalCreate')">Batal</button>
+                <button type="submit" class="btn-primary-admin" id="btnSaveCreate">Pasangkan Peran</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    var dtUserRoles = null;
+    var allUserRoles = [];
+
+    function renderUserRolesTable(data) {
+        if ($.fn.DataTable.isDataTable('#tableUserRoles')) {
+            $('#tableUserRoles').DataTable().destroy();
+        }
+        dtUserRoles = $('#tableUserRoles').DataTable({
+            data: data || [],
+            pageLength: 10,
+            lengthMenu: [
+                [10, 25, 50, 100, -1],
+                [10, 25, 50, 100, "Semua"]
+            ],
+            columns: [
+                {
+                    data: null,
+                    className: "text-center fw-bold text-muted",
+                    render: function (data, type, row, meta) {
+                        return meta.row + 1;
+                    }
+                },
+                {
+                    data: null,
+                    render: function (data, type, ur) {
+                        var userName = ur.userName || (ur.user ? ur.user.name : '') || 'User #' + ur.userId;
+                        var userEmail = ur.userEmail || (ur.user ? ur.user.email : '') || '-';
+                        var initial = userName.charAt(0).toUpperCase();
+                        return `
+                            <div class="avatar-cell">
+                                <div class="avatar-circle">${initial}</div>
+                                <div>
+                                    <strong style="color:#0f172a;">${escHtml(userName)}</strong>
+                                    <small class="d-block" style="color:#94a3b8; font-size:11px;">${escHtml(userEmail)}</small>
+                                </div>
+                            </div>
+                        `;
+                    }
+                },
+                {
+                    data: null,
+                    render: function (data, type, ur) {
+                        var roleDisplayName = ur.roleDisplayName || (ur.role ? ur.role.displayName : '') || ur.roleName || 'Role #' + ur.roleId;
+                        var roleCode = ur.roleName || (ur.role ? ur.role.name : '');
+                        return `
+                            <span class="status-pill pill-role">${escHtml(roleDisplayName)}</span>
+                            ${roleCode ? `<small class="text-muted ms-1" style="font-size:11px;">(${escHtml(roleCode)})</small>` : ''}
+                        `;
+                    }
+                },
+                {
+                    data: 'created_at',
+                    render: function (data) {
+                        if (!data) return '<span style="color:#94a3b8;">-</span>';
+                        var d = new Date(data);
+                        return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    }
+                },
+                {
+                    data: 'id',
+                    orderable: false,
+                    className: "text-end",
+                    render: function (data, type, ur) {
+                        var userName = ur.userName || (ur.user ? ur.user.name : '') || 'User #' + ur.userId;
+                        var roleName = ur.roleDisplayName || ur.roleName || (ur.role ? (ur.role.displayName || ur.role.name) : '') || 'Peran';
+                        return `
+                            <button type="button" class="btn-table-action btn-table-del" onclick="delUserRole(${data}, '${escHtml(userName)}', '${escHtml(roleName)}')">
+                                <i class="fas fa-trash"></i> Lepas Peran
+                            </button>
+                        `;
+                    }
+                }
+            ]
+        });
+    }
+
+    function loadUserRoles() {
+        $.ajax({
+            url: API_BASE_URL + '/userroles',
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                allUserRoles = data || [];
+                renderUserRolesTable(allUserRoles);
+            },
+            error: function () {
+                AdminToast.error('Gagal mengambil data penugasan peran');
+                renderUserRolesTable([]);
+            }
+        });
+    }
+
+    window.openCreateModal = function () {
+        $('#formCreate')[0].reset();
+        
+        // Muat daftar Pengguna
+        $.ajax({
+            url: API_BASE_URL + '/users',
+            type: 'GET',
+            dataType: 'json',
+            success: function (users) {
+                var s = $('#cUser').empty().append('<option value="">-- Pilih Akun Pengguna --</option>');
+                if (users && users.length > 0) {
+                    users.forEach(function (u) {
+                        s.append(`<option value="${u.id}">${escHtml(u.name)} (${escHtml(u.email)})</option>`);
+                    });
+                } else {
+                    s.append('<option value="" disabled>Tidak ada pengguna tersedia</option>');
+                }
+            },
+            error: function () {
+                AdminToast.error('Gagal mengambil data pengguna');
+            }
+        });
+
+        // Muat daftar Peran
+        $.ajax({
+            url: API_BASE_URL + '/roles',
+            type: 'GET',
+            dataType: 'json',
+            success: function (roles) {
+                var s = $('#cRole').empty().append('<option value="">-- Pilih Peran --</option>');
+                if (roles && roles.length > 0) {
+                    roles.forEach(function (r) {
+                        var label = r.displayName ? `${r.displayName} (${r.name})` : r.name;
+                        s.append(`<option value="${r.id}">${escHtml(label)}</option>`);
+                    });
+                } else {
+                    s.append('<option value="" disabled>Tidak ada peran tersedia</option>');
+                }
+            },
+            error: function () {
+                AdminToast.error('Gagal mengambil data peran');
+            }
+        });
+
+        AdminModal.open('modalCreate');
+    };
+
+    window.submitCreate = function () {
+        var userIdVal = $('#cUser').val();
+        var roleIdVal = $('#cRole').val();
+
+        if (!userIdVal) {
+            AdminToast.error('Pilih akun pengguna terlebih dahulu!');
+            return;
+        }
+        if (!roleIdVal) {
+            AdminToast.error('Pilih peran (role) yang ingin dipasangkan!');
+            return;
+        }
+
+        var payload = {
+            userId: parseInt(userIdVal),
+            roleId: parseInt(roleIdVal)
+        };
+
+        $('#btnSaveCreate').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Memasangkan...');
+
+        $.ajax({
+            url: API_BASE_URL + '/userroles',
+            type: 'POST',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function (res) {
+                $('#btnSaveCreate').prop('disabled', false).text('Pasangkan Peran');
+                AdminModal.close('modalCreate');
+                AdminToast.success(res.message || 'Peran berhasil dipasangkan ke pengguna');
+                loadUserRoles();
+            },
+            error: function (xhr) {
+                $('#btnSaveCreate').prop('disabled', false).text('Pasangkan Peran');
+                var msg = 'Gagal menugaskan peran';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    } else if (xhr.responseJSON.errors) {
+                        var errList = [];
+                        for (var k in xhr.responseJSON.errors) {
+                            errList.push(xhr.responseJSON.errors[k].join(', '));
+                        }
+                        msg = errList.join('; ');
+                    }
+                }
+                AdminToast.error(msg);
+            }
+        });
+    };
+
+    window.delUserRole = function (id, userName, roleName) {
+        if (confirm(`Apakah Anda yakin ingin melepas peran "${roleName}" dari akun "${userName}"?`)) {
+            $.ajax({
+                url: API_BASE_URL + '/userroles/' + id,
+                type: 'DELETE',
+                dataType: 'json',
+                success: function (res) {
+                    AdminToast.success(res && res.message ? res.message : 'Penugasan peran telah dilepas');
+                    loadUserRoles();
+                },
+                error: function (xhr) {
+                    var msg = 'Gagal melepas peran';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    }
+                    AdminToast.error(msg);
+                }
+            });
+        }
+    };
+
+    $(function () {
+        loadUserRoles();
+    });
+</script>
+}

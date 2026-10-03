@@ -1,0 +1,396 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Riwayat Donasi";
+}
+
+<style>
+    /* Scoped custom style for Donor History */
+    .history-stat-icon {
+        width: 46px;
+        height: 46px;
+        font-size: 1.2rem;
+    }
+    .history-receipt-banner {
+        background: linear-gradient(135deg, #0d9488 0%, #115e59 100%);
+    }
+    .history-receipt-icon-circle {
+        width: 48px;
+        height: 48px;
+    }
+    .history-camp-title-cell {
+        max-width: 240px;
+    }
+    .history-prayer-cell {
+        max-width: 180px;
+    }
+
+    @@media print {
+        body * {
+            visibility: hidden;
+        }
+        #receiptPrintArea, #receiptPrintArea * {
+            visibility: visible;
+        }
+        #receiptPrintArea {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+        .modal {
+            position: static;
+            display: block !important;
+        }
+        .modal-dialog {
+            max-width: 100% !important;
+            margin: 0 !important;
+        }
+        .modal-footer {
+            display: none !important;
+        }
+    }
+</style>
+
+<!-- Outermost View Wrapper adhering to aturan_styling.txt -->
+<div class="row">
+    <div class="col-12">
+
+<!-- Breadcrumb Bar: Pojok Kanan Atas Mandiri -->
+<div class="content-breadcrumb-bar">
+    <div class="breadcrumb-nav" id="pageBreadcrumb">
+        <span class="breadcrumb-current">Riwayat Donasi</span>
+        <span class="breadcrumb-separator">/</span>
+    </div>
+</div>
+
+<!-- Action Bar: Tombol di bawah Breadcrumb -->
+<div class="content-action-bar">
+    <a href="javascript:void(0)" id="btnDonateNew" class="btn btn-brand rounded-pill px-4">
+        <i class="fas fa-hand-holding-heart me-2"></i> Salurkan Donasi Baru
+    </a>
+</div>
+
+<!-- KPI Mini Summary -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card-box py-3">
+            <div class="stat-icon bg-teal bg-opacity-10 text-teal history-stat-icon">
+                <i class="fas fa-circle-check"></i>
+            </div>
+            <div>
+                <p class="stat-label mb-1">Total Dana Disalurkan</p>
+                <h4 class="fw-bold mb-0 text-dark" id="summaryPaidTotal">Rp 0</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card-box py-3">
+            <div class="stat-icon bg-primary bg-opacity-10 text-primary history-stat-icon">
+                <i class="fas fa-list-check"></i>
+            </div>
+            <div>
+                <p class="stat-label mb-1">Donasi Terverifikasi</p>
+                <h4 class="fw-bold mb-0 text-dark" id="summaryPaidCount">0 Transaksi</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card-box py-3">
+            <div class="stat-icon bg-warning bg-opacity-10 text-warning history-stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div>
+                <p class="stat-label mb-1">Menunggu Pembayaran</p>
+                <h4 class="fw-bold mb-0 text-dark" id="summaryPendingCount">0 Transaksi</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Donations Table Card -->
+<div class="admin-card">
+    <div class="admin-card-header d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="admin-card-title mb-0">Seluruh Transaksi Donasi</h5>
+            <small class="text-muted">Klik kuitansi pada transaksi terverifikasi untuk mengunduh atau mencetak bukti donasi resmi.</small>
+        </div>
+    </div>
+    <div class="admin-card-body p-4">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle w-100" id="tableHistory">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 50px; text-align:center;">NO</th>
+                        <th>No. Invoice</th>
+                        <th>Program Campaign</th>
+                        <th>Nominal</th>
+                        <th>Status</th>
+                        <th>Tanggal</th>
+                        <th>Doa & Niat</th>
+                        <th class="text-center" style="width: 140px;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Kuitansi Donasi Resmi -->
+<div class="modal fade" id="modalReceipt" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-body p-0" id="receiptPrintArea">
+                <!-- Receipt Header -->
+                <div class="p-4 text-white position-relative history-receipt-banner">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-white rounded-circle p-2 text-teal d-flex align-items-center justify-content-center shadow-sm history-receipt-icon-circle">
+                                <i class="fas fa-heart fs-4" style="color:#0f766e;"></i>
+                            </div>
+                            <div>
+                                <h4 class="fw-bold mb-0 text-white">BUKTI RESMI DONASI</h4>
+                                <small class="text-white-50 font-monospace">PLATFORM DONASI & SOSIAL DIGITAL</small>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-white fw-bold rounded-pill px-3 py-2" style="color:#0f766e;">
+                                <i class="fas fa-circle-check me-1 text-success"></i> TERVERIFIKASI SAH
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Receipt Body Content -->
+                <div class="p-4 bg-light bg-opacity-50">
+                    <div class="card border-0 rounded-4 shadow-sm p-4 bg-white mb-3">
+                        <div class="row g-3 mb-3 border-bottom pb-3">
+                            <div class="col-sm-6">
+                                <small class="text-muted d-block">Nomor Kuitansi / Invoice</small>
+                                <span class="fw-bold font-monospace fs-6 text-dark" id="rcptInvoice">-</span>
+                            </div>
+                            <div class="col-sm-6 text-sm-end">
+                                <small class="text-muted d-block">Tanggal Pelunasan</small>
+                                <span class="fw-semibold text-dark" id="rcptDate">-</span>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3 border-bottom pb-3">
+                            <div class="col-sm-6">
+                                <small class="text-muted d-block">Nama Donatur</small>
+                                <span class="fw-bold text-dark fs-6" id="rcptDonor">-</span>
+                            </div>
+                            <div class="col-sm-6 text-sm-end">
+                                <small class="text-muted d-block">Metode Pembayaran</small>
+                                <span class="badge bg-light text-dark border px-3 py-2 font-monospace" id="rcptPaymentMethod">QRIS / VIRTUAL ACCOUNT</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 border-bottom pb-3">
+                            <small class="text-muted d-block">Program Bantuan / Campaign</small>
+                            <h6 class="fw-bold mb-1 mt-1" style="color:#0f766e;" id="rcptCampaign">-</h6>
+                            <small class="text-muted" id="rcptFoundation">Penyelenggara: Mitra Yayasan Resmi</small>
+                        </div>
+
+                        <div class="p-3 rounded-3 bg-light d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <small class="text-muted fw-semibold text-uppercase">Jumlah Donasi Diterima</small>
+                                <h3 class="fw-bold text-dark mb-0" id="rcptAmount">Rp 0</h3>
+                            </div>
+                            <div class="text-end">
+                                <i class="fas fa-stamp fa-3x opacity-25" style="color:#0f766e;"></i>
+                            </div>
+                        </div>
+
+                        <div id="rcptPrayerWrap" class="p-3 rounded-3 border border-dashed bg-light bg-opacity-25">
+                            <small class="fw-bold text-muted d-block mb-1"><i class="fas fa-quote-left me-1" style="color:#0f766e;"></i> Doa & Harapan Donatur:</small>
+                            <p class="fst-italic text-muted mb-0 small" id="rcptPrayer">-</p>
+                        </div>
+                    </div>
+
+                    <div class="text-center text-muted small px-3">
+                        <i class="fas fa-shield-alt me-1" style="color:#0f766e;"></i> Bukti donasi elektronik ini diterbitkan secara otomatis dan sah menurut ketentuan platform digital tanpa memerlukan tanda tangan basah.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Receipt Actions -->
+            <div class="modal-footer bg-white border-top-0 px-4 py-3 d-flex justify-content-between">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">
+                    Tutup
+                </button>
+                <button type="button" class="btn btn-brand rounded-pill px-4" onclick="window.print()">
+                    <i class="fas fa-print me-2"></i> Cetak / Simpan PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    var donationCache = [];
+    var historyDataTable = null;
+    var currentUser = null;
+
+    function formatRupiah(number) {
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number || 0);
+    }
+
+    function updateSummaries(list) {
+        var paidList = list.filter(function(x) {
+            return (x.paymentStatus || x.status || '').toUpperCase() === 'PAID';
+        });
+        var pendingList = list.filter(function(x) {
+            return (x.paymentStatus || x.status || '').toUpperCase() === 'PENDING';
+        });
+
+        var totalPaid = paidList.reduce(function(sum, x) { return sum + (x.totalAmount || x.amount || 0); }, 0);
+        $('#summaryPaidTotal').text(formatRupiah(totalPaid));
+        $('#summaryPaidCount').text(paidList.length + ' Transaksi');
+        $('#summaryPendingCount').text(pendingList.length + ' Transaksi');
+    }
+
+    function renderHistoryTable(list) {
+        donationCache = list || [];
+        updateSummaries(donationCache);
+
+        if ($.fn.DataTable.isDataTable('#tableHistory')) {
+            $('#tableHistory').DataTable().destroy();
+        }
+
+        historyDataTable = $('#tableHistory').DataTable({
+            data: donationCache,
+            columns: [
+                { 
+                    data: null, 
+                    orderable: false,
+                    className: "text-muted",
+                    render: function(data, type, row, meta) { 
+                        return meta.row + 1; 
+                    } 
+                },
+                { 
+                    data: 'invoiceNumber', 
+                    render: function(data) { 
+                        return `<a href="/PaymentStatus/${escHtml(data)}" target="_blank" class="font-monospace small text-decoration-none fw-semibold" style="color:#0f766e;">${escHtml(data)}</a>`; 
+                    }
+                },
+                { 
+                    data: 'campaignTitle', 
+                    render: function(data, type, row) { 
+                        var title = data || (row.campaign ? row.campaign.title : 'Program Donasi');
+                        return `<div class="fw-semibold text-truncate history-camp-title-cell" title="${escHtml(title)}">${escHtml(title)}</div>`; 
+                    }
+                },
+                { 
+                    data: 'totalAmount', 
+                    render: function(data, type, row) { 
+                        var val = data || row.amount || 0;
+                        return '<span class="fw-bold text-dark">' + formatRupiah(val) + '</span>'; 
+                    }
+                },
+                { 
+                    data: 'paymentStatus', 
+                    render: function(data, type, row) { 
+                        var st = (data || row.status || 'PENDING').toUpperCase();
+                        var pillClass = st === 'PAID' ? 'pill-active' : (st === 'PENDING' ? 'pill-pending' : 'pill-inactive');
+                        var label = st === 'PAID' ? 'Terverifikasi' : (st === 'PENDING' ? 'Menunggu' : 'Batal');
+                        return `<span class="status-pill ${pillClass}"><span class="dot-indicator"></span>${label}</span>`;
+                    }
+                },
+                { 
+                    data: 'paidAt', 
+                    render: function(data, type, row) { 
+                        var dateVal = data || row.createdAt;
+                        return `<span class="text-muted small">${dateVal ? new Date(dateVal).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }) : '-'}</span>`; 
+                    }
+                },
+                { 
+                    data: 'prayerMessage', 
+                    render: function(data) { 
+                        return data ? `<div class="fst-italic text-muted small text-truncate history-prayer-cell" title="${escHtml(data)}">"${escHtml(data)}"</div>` : '<span class="text-muted small">-</span>'; 
+                    }
+                },
+                {
+                    data: 'id',
+                    orderable: false,
+                    className: 'text-center',
+                    render: function(data, type, row) {
+                        var st = (row.paymentStatus || row.status || 'PENDING').toUpperCase();
+                        if (st === 'PAID') {
+                            return `<button type="button" class="btn btn-outline-teal btn-sm rounded-pill px-3" onclick="openReceiptModal(${data})">
+                                        <i class="fas fa-receipt me-1"></i> Kuitansi
+                                    </button>`;
+                        } else {
+                            return `<a href="/PaymentStatus/${escHtml(row.invoiceNumber)}" class="btn btn-brand btn-sm rounded-pill px-3">
+                                        <i class="fas fa-credit-card me-1"></i> Bayar
+                                    </a>`;
+                        }
+                    }
+                }
+            ]
+        });
+    }
+
+    function loadHistory() {
+        currentUser = AuthSession.getUser();
+        if (!currentUser) {
+            AuthSession.redirectToLogin();
+            return;
+        }
+
+        var currentUserId = currentUser.id || currentUser.Id;
+
+        var fParam = window.CONFIGURED_FOUNDATION_ID ? ('?foundationId=' + window.CONFIGURED_FOUNDATION_ID) : '';
+        $.ajax({
+            url: API_BASE_URL + '/donations/user/' + currentUserId + fParam,
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                renderHistoryTable(data || []);
+            },
+            error: function () {
+                AdminToast.error('Gagal memuat riwayat donasi');
+                renderHistoryTable([]);
+            }
+        });
+    }
+
+    window.openReceiptModal = function(id) {
+        var item = donationCache.find(function(x) { return x.id === id; });
+        if (!item) return;
+
+        var donorName = item.isAnonymous ? 'Hamba Allah (Anonim)' : (item.donorName || ((currentUser && currentUser.name) || 'Donatur Peduli'));
+        var campTitle = item.campaignTitle || (item.campaign ? item.campaign.title : 'Program Donasi');
+        var amountVal = item.totalAmount || item.amount || 0;
+        var dateStr = (item.paidAt || item.createdAt) ? new Date(item.paidAt || item.createdAt).toLocaleDateString('id-ID', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        }) : '-';
+
+        $('#rcptInvoice').text(item.invoiceNumber || '-');
+        $('#rcptDate').text(dateStr);
+        $('#rcptDonor').text(donorName);
+        $('#rcptCampaign').text(campTitle);
+        $('#rcptAmount').text(formatRupiah(amountVal));
+        $('#rcptPaymentMethod').text((item.paymentMethod || 'QRIS / INSTANT TRANSFER').toUpperCase());
+
+        if (item.prayerMessage) {
+            $('#rcptPrayerWrap').show();
+            $('#rcptPrayer').text(item.prayerMessage);
+        } else {
+            $('#rcptPrayerWrap').hide();
+        }
+
+        $('#modalReceipt').modal('show');
+    };
+
+    $(document).ready(function() {
+        $('#btnDonateNew').attr('href', '/Campaigns');
+        loadHistory();
+    });
+</script>
+}

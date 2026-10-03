@@ -1,0 +1,448 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Profil & Rekening Yayasan";
+}
+
+<style>
+    /* Scoped custom style for Foundation Settings */
+    .settings-preview-banner {
+        height: 180px;
+        background-size: cover;
+        background-position: center;
+        background-color: #0d9488;
+        background-image: linear-gradient(135deg, #0d9488 0%, #115e59 100%);
+    }
+    .settings-logo-box {
+        width: 100px;
+        height: 100px;
+        border: 4px solid #ffffff;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+    .settings-public-url {
+        max-width: 250px;
+    }
+    .badge-verified-legal {
+        background: #ccfbf1;
+        color: #0f766e;
+        border: 1px solid #99f6e4;
+        font-weight: 600;
+        font-size: 11.5px;
+    }
+</style>
+
+<!-- Outermost View Wrapper adhering to aturan_styling.txt -->
+<div class="row">
+    <div class="col-12">
+
+<!-- Breadcrumb Bar: Pojok Kanan Atas Mandiri -->
+<div class="content-breadcrumb-bar">
+    <div class="breadcrumb-nav" id="pageBreadcrumb">
+        <span class="breadcrumb-current">Profil & Rekening Yayasan</span>
+        <span class="breadcrumb-separator">/</span>
+    </div>
+</div>
+
+<!-- Action Bar: Tombol & Switcher di bawah Breadcrumb -->
+<div class="content-action-bar">
+    <div id="foundationSwitcherContainer" style="display:none;">
+        <select class="form-select form-select-sm rounded-3 fw-semibold border-teal" id="selectMyFoundation" onchange="onFoundationSwitch(this.value)">
+            <!-- Pilihan yayasan jika user mengelola lebih dari 1 -->
+        </select>
+    </div>
+    <a id="btnViewPublicWeb" href="#" target="_blank" class="btn-secondary-admin text-decoration-none" style="display:none;">
+        <i class="fas fa-external-link-alt me-1"></i> Web Publik
+    </a>
+</div>
+
+<div id="loading" class="text-center py-5">
+    <div class="spinner-border" role="status" style="color:#0f766e;">
+        <span class="visually-hidden">Memuat data...</span>
+    </div>
+    <p class="text-muted mt-2 small">Memuat data profil & rekening yayasan...</p>
+</div>
+
+<div id="settingsContainer" style="display:none;">
+    <div id="settingsAlertArea"></div>
+
+    <!-- Live Preview Header Banner Card -->
+    <div class="admin-card mb-4 overflow-hidden">
+        <div class="admin-card-header bg-light border-bottom d-flex justify-content-between align-items-center py-3">
+            <h6 class="fw-bold mb-0 text-dark">
+                <i class="fas fa-eye text-teal me-2" style="color:#0f766e;"></i> Pratinjau Tampilan Publik Lembaga
+            </h6>
+            <span class="badge rounded-pill px-3 py-1 badge-verified-legal" id="previewLegalPermitBadge">
+                <i class="fas fa-certificate me-1"></i> Terdaftar Resmi
+            </span>
+        </div>
+        <div class="position-relative settings-preview-banner" id="livePreviewBanner">
+        </div>
+        <div class="p-4 bg-white position-relative" style="margin-top: -50px;">
+            <div class="d-flex flex-column flex-md-row align-items-center align-items-md-end gap-3 text-center text-md-start">
+                <div class="rounded-circle bg-white shadow-sm d-flex align-items-center justify-content-center p-1 settings-logo-box">
+                    <img id="previewLogo" src="https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=300" 
+                         alt="Logo Preview" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <div class="flex-grow-1">
+                    <h4 class="fw-bold mb-1 text-dark" id="previewTitle">Nama Yayasan</h4>
+                    <p class="text-muted small mb-0" id="previewBio">Deskripsi singkat visi dan misi yayasan Anda.</p>
+                </div>
+                <div class="text-md-end">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light text-muted small"><i class="fas fa-link"></i></span>
+                        <input type="text" class="form-control form-control-sm bg-light text-muted font-monospace settings-public-url" id="publicWebUrlInput" readonly>
+                        <button class="btn btn-outline-secondary btn-sm" type="button" id="btnCopyPublicWebLink" onclick="copyPublicWebLink()" title="Salin Link">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Settings -->
+    <div class="admin-card">
+        <div class="admin-card-body p-4">
+            <form id="formSettings" onsubmit="event.preventDefault(); submitSettings();">
+                <input type="hidden" id="fId" />
+                <input type="hidden" id="fUserId" />
+
+                <!-- Bagian 1: Data Legalitas Resmi (Didaftarkan oleh Superadmin) -->
+                <div class="mb-4 p-3 rounded-3" style="background:#f8fafc; border:1px solid #e2e8f0;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold text-dark mb-0">
+                            <i class="fas fa-file-shield text-teal me-2" style="color:#0f766e;"></i> Data Legalitas Resmi (Diverifikasi Superadmin)
+                        </h6>
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size:11px;">
+                            <i class="fas fa-check-circle me-1"></i> Terverifikasi Platform
+                        </span>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-dark small mb-1">Nama Resmi Yayasan</label>
+                            <input type="text" class="form-control form-control-sm bg-white" id="name" required placeholder="Nama Yayasan" oninput="handleNameInput(this)">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-dark small mb-1">Slug URL Web Publik</label>
+                            <input type="text" class="form-control form-control-sm bg-white font-monospace" id="slug" required placeholder="slug-yayasan" oninput="handlePreviewChange()">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-dark small mb-1">No. SK Kemenkumham / Legalitas</label>
+                            <input type="text" class="form-control form-control-sm bg-white" id="legalPermitNumber" required placeholder="Nomor SK Legalitas">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bagian 2: Rekening Bank Penyaluran Resmi (Prioritas Utama Yayasan) -->
+                <div class="mb-4 p-3 rounded-3" style="background:#fffbeb; border:1px solid #fde68a;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="fw-bold text-dark mb-0">
+                            <i class="fas fa-university text-warning me-2"></i> Rekening Bank Penyaluran Resmi Yayasan
+                        </h5>
+                        <span class="badge bg-warning text-dark border border-warning" style="font-size:11px;">
+                            <i class="fas fa-exclamation-circle me-1"></i> Wajib Dilengkapi
+                        </span>
+                    </div>
+                    <p class="text-muted small mb-3">
+                        Rekening bank resmi atas nama yayasan untuk menerima pencairan dana donasi dari platform. Pastikan nama pemilik rekening sesuai nama yayasan.
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-dark">Nama Bank <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control rounded-3" id="bankName" required placeholder="BCA / Mandiri / BSI / BRI">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-dark">Nomor Rekening <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control rounded-3 font-monospace" id="bankAccountNumber" required placeholder="Contoh: 1234567890">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-dark">Nama Pemilik Rekening <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control rounded-3" id="bankAccountHolder" required placeholder="Harus atas nama Yayasan">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bagian 3: Kontak & Alamat Kantor -->
+                <div class="mb-4">
+                    <h5 class="fw-bold text-dark mb-3">
+                        <i class="fas fa-map-location-dot text-teal me-2" style="color:#0f766e;"></i> Kontak & Alamat Kantor Yayasan
+                    </h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark">Nomor WhatsApp Resmi Pelayanan</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-success"><i class="fab fa-whatsapp"></i></span>
+                                <input type="text" class="form-control rounded-3" id="whatsappNumber" placeholder="Contoh: 081234567890">
+                            </div>
+                            <small class="text-muted">Donatur dapat menghubungi pengelola yayasan secara langsung melalui nomor ini.</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark">Alamat Lengkap Kantor / Sekretariat</label>
+                            <textarea class="form-control rounded-3" id="address" rows="2" placeholder="Jl. Kebaikan No. 123, Kota..."></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold text-dark">Deskripsi Singkat / Bio Profil Yayasan</label>
+                            <textarea class="form-control rounded-3" id="bio" rows="3" placeholder="Jelaskan secara singkat visi, misi, dan fokus program bantuan yayasan Anda..." oninput="handlePreviewChange()"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4 opacity-25">
+
+                <!-- Bagian 4: Identitas Visual & Media Publik -->
+                <div class="mb-4">
+                    <h5 class="fw-bold text-dark mb-3">
+                        <i class="fas fa-image text-teal me-2" style="color:#0f766e;"></i> Identitas Visual & Media Publik
+                    </h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark">URL Logo Lembaga (Rasio 1:1 Persegi)</label>
+                            <input type="url" class="form-control rounded-3" id="logoUrl" placeholder="https://domain.com/logo.jpg" oninput="handlePreviewChange()">
+                            <small class="text-muted">Tautan gambar beresolusi tajam untuk logo profil yayasan.</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark">URL Sampul Banner (Landscape 3:1)</label>
+                            <input type="url" class="form-control rounded-3" id="bannerUrl" placeholder="https://domain.com/banner.jpg" oninput="handlePreviewChange()">
+                            <small class="text-muted">Banner visual yang tampil di bagian atas halaman publik yayasan.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 pt-3">
+                    <button type="submit" class="btn-primary-admin" id="btnSave">
+                        <i class="fas fa-save me-2"></i> Simpan Profil & Rekening Yayasan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    var currentUser = null;
+    var myFoundationsList = [];
+    var currentSelectedFoundation = null;
+
+    function handlePreviewChange() {
+        var nameVal = $('#name').val() || 'Nama Yayasan';
+        var bioVal = $('#bio').val() || 'Deskripsi singkat visi dan misi yayasan Anda.';
+        var logoVal = $('#logoUrl').val();
+        var bannerVal = $('#bannerUrl').val();
+        var slugVal = $('#slug').val();
+        var permitVal = $('#legalPermitNumber').val();
+
+        $('#previewTitle').text(nameVal);
+        $('#previewBio').text(bioVal);
+
+        if (permitVal) {
+            $('#previewLegalPermitBadge').html('<i class="fas fa-certificate me-1"></i> SK: ' + escHtml(permitVal));
+        }
+
+        if (logoVal) {
+            $('#previewLogo').attr('src', logoVal);
+        } else {
+            $('#previewLogo').attr('src', 'https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=300');
+        }
+
+        if (bannerVal) {
+            $('#livePreviewBanner').css('background-image', 'url(' + bannerVal + ')');
+        } else {
+            $('#livePreviewBanner').css('background-image', 'linear-gradient(135deg, #0d9488 0%, #115e59 100%)');
+        }
+
+        var fullUrl = window.location.origin + '/';
+        $('#publicWebUrlInput').val(fullUrl);
+        $('#btnViewPublicWeb').attr('href', fullUrl).show();
+    }
+
+    function handleNameInput(elem) {
+        if (!$('#fId').val() || !$('#slug').val()) {
+            var s = $(elem).val().toLowerCase()
+                        .replace(/[^a-z0-9]+/g, '-')
+                        .replace(/(^-|-$)+/g, '');
+            $('#slug').val(s);
+        }
+        handlePreviewChange();
+    }
+
+    function copyPublicWebLink() {
+        var url = $('#publicWebUrlInput').val();
+        if (!url) return;
+        navigator.clipboard.writeText(url).then(function() {
+            var $btn = $('#btnCopyPublicWebLink');
+            $btn.html('<i class="fas fa-check text-success"></i>');
+            setTimeout(function() {
+                $btn.html('<i class="fas fa-copy"></i>');
+            }, 2000);
+        });
+    }
+
+    function populateFoundationForm(f) {
+        if (!f) return;
+        currentSelectedFoundation = f;
+
+        $('#fId').val(f.id);
+        $('#fUserId').val(f.userId || (currentUser ? currentUser.id : 0));
+        $('#name').val(f.name || '');
+        $('#slug').val(f.slug || '');
+        $('#bio').val(f.bio || '');
+        $('#address').val(f.address || '');
+        $('#whatsappNumber').val(f.whatsappNumber || '');
+        $('#legalPermitNumber').val(f.legalPermitNumber || '');
+        $('#bankName').val(f.bankName || '');
+        $('#bankAccountNumber').val(f.bankAccountNumber || '');
+        $('#bankAccountHolder').val(f.bankAccountHolder || '');
+        $('#logoUrl').val(f.logoUrl || '');
+        $('#bannerUrl').val(f.bannerUrl || '');
+
+        handlePreviewChange();
+    }
+
+    window.onFoundationSwitch = function(foundationId) {
+        var id = parseInt(foundationId);
+        var f = myFoundationsList.find(function(x) { return x.id === id; });
+        if (f) {
+            populateFoundationForm(f);
+        }
+    };
+
+    function loadSettings() {
+        currentUser = AuthSession.getUser();
+        if (!currentUser) {
+            AuthSession.redirectToLogin();
+            return;
+        }
+
+        var currentUserId = currentUser.id || currentUser.Id || 0;
+
+        $.ajax({
+            url: API_BASE_URL + '/foundations',
+            type: 'GET',
+            dataType: 'json',
+            success: function(founds) {
+                $('#loading').hide();
+                $('#settingsContainer').show();
+
+                var list = founds || [];
+                
+                // Cari yayasan tempat user bertindak sebagai PIC (foundation_users atau direct userId)
+                myFoundationsList = list.filter(function(x) {
+                    if (x.userId === currentUserId) return true;
+                    if (Array.isArray(x.foundationUsers) && x.foundationUsers.some(function(fu) { return fu.userId === currentUserId; })) return true;
+                    if (Array.isArray(x.userIds) && x.userIds.indexOf(currentUserId) !== -1) return true;
+                    return false;
+                });
+
+                // Hanya Super Admin yang dapat melihat semua organisasi jika belum terpaut sebagai PIC
+                var userRoles = (currentUser.roles || []).map(function(r) { return (r || '').toLowerCase(); });
+                var isSuperAdmin = userRoles.some(function(r) { return r.includes('super') || r === 'super_admin'; });
+                if (myFoundationsList.length === 0 && isSuperAdmin && list.length > 0) {
+                    myFoundationsList = list;
+                }
+
+                if (myFoundationsList.length > 0) {
+                    var configuredFid = window.CONFIGURED_FOUNDATION_ID || 0;
+                    var defaultTarget = null;
+                    if (configuredFid > 0) {
+                        defaultTarget = myFoundationsList.find(function(item) { return item.id === configuredFid; });
+                    }
+                    if (!defaultTarget) {
+                        defaultTarget = myFoundationsList[0];
+                    }
+
+                    // Jika mengelola lebih dari 1 yayasan, sediakan switcher dropdown
+                    if (myFoundationsList.length > 1) {
+                        var $sel = $('#selectMyFoundation').empty();
+                        myFoundationsList.forEach(function(item) {
+                            var isSelected = (defaultTarget && item.id === defaultTarget.id) ? 'selected' : '';
+                            $sel.append(`<option value="${item.id}" ${isSelected}>${escHtml(item.name)}</option>`);
+                        });
+                        $('#foundationSwitcherContainer').show();
+                    } else {
+                        $('#foundationSwitcherContainer').hide();
+                    }
+
+                    populateFoundationForm(defaultTarget);
+                } else {
+                    $('#fUserId').val(currentUserId);
+                    $('#settingsAlertArea').html(`
+                        <div class="alert alert-warning rounded-3 border-0 shadow-sm p-3 mb-4" style="background:#fffbeb; color:#b45309;">
+                            <i class="fas fa-exclamation-triangle me-2"></i> Akun Anda belum terhubung dengan yayasan manapun. Silakan hubungi Superadmin platform untuk menambahkan akun Anda sebagai Admin Pengelola (PIC).
+                        </div>
+                    `);
+                }
+            },
+            error: function() {
+                $('#loading').html('<div class="alert alert-danger rounded-3 p-3">Gagal memuat pengaturan profil yayasan. Silakan muat ulang halaman.</div>');
+            }
+        });
+    }
+
+    function submitSettings() {
+        $('#settingsAlertArea').empty();
+
+        var id = $('#fId').val();
+        if (!id) {
+            AdminToast.error('Yayasan tidak ditemukan.');
+            return;
+        }
+
+        var bankName = $('#bankName').val().trim();
+        var bankAccountNumber = $('#bankAccountNumber').val().trim();
+        var bankAccountHolder = $('#bankAccountHolder').val().trim();
+
+        if (!bankName || !bankAccountNumber || !bankAccountHolder) {
+            AdminToast.error('Nama Bank, Nomor Rekening, dan Nama Pemilik Rekening wajib diisi');
+            return;
+        }
+
+        var currentUserId = (currentUser && (currentUser.id || currentUser.Id)) || 0;
+
+        var payload = {
+            id: parseInt(id),
+            userId: parseInt($('#fUserId').val() || currentUserId),
+            name: $('#name').val().trim(),
+            slug: $('#slug').val().trim(),
+            legalPermitNumber: $('#legalPermitNumber').val().trim(),
+            bankName: bankName,
+            bankAccountNumber: bankAccountNumber,
+            bankAccountHolder: bankAccountHolder,
+            whatsappNumber: $('#whatsappNumber').val() ? $('#whatsappNumber').val().trim() : null,
+            bio: $('#bio').val() ? $('#bio').val().trim() : null,
+            address: $('#address').val() ? $('#address').val().trim() : null,
+            logoUrl: $('#logoUrl').val() ? $('#logoUrl').val().trim() : null,
+            bannerUrl: $('#bannerUrl').val() ? $('#bannerUrl').val().trim() : null,
+            isActive: true
+        };
+
+        var $btn = $('#btnSave');
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Menyimpan...');
+
+        $.ajax({
+            url: API_BASE_URL + '/foundations/' + id,
+            type: 'PUT',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function(res) {
+                AdminToast.success('Profil & rekening yayasan berhasil diperbarui!');
+                $btn.prop('disabled', false).html('<i class="fas fa-save me-2"></i> Simpan Profil & Rekening Yayasan');
+                handlePreviewChange();
+            },
+            error: function(xhr) {
+                var errMsg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Terjadi kesalahan saat menyimpan pengaturan yayasan.';
+                AdminToast.error(errMsg);
+                $btn.prop('disabled', false).html('<i class="fas fa-save me-2"></i> Simpan Profil & Rekening Yayasan');
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        loadSettings();
+    });
+</script>
+}

@@ -1,0 +1,316 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Kelola Navbar - (Master)";
+}
+
+<style>
+    /* Scoped styling for Admin Navbars Master */
+    .url-token-badge {
+        font-family: monospace;
+        background: #f1f5f9;
+        color: #0f766e;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 12px;
+        border: 1px solid #e2e8f0;
+    }
+</style>
+
+<!-- Outermost View Wrapper adhering to aturan_styling.txt -->
+<div class="row">
+    <div class="col-12">
+
+        <!-- Breadcrumb Bar: Pojok Kanan Atas Mandiri -->
+        <div class="content-breadcrumb-bar">
+            <div class="breadcrumb-nav" id="pageBreadcrumb">
+                <span class="breadcrumb-current">Kelola Navbar - (Master)</span>
+                <span class="breadcrumb-separator">/</span>
+            </div>
+        </div>
+
+        <!-- Action Bar: Tombol di bawah Breadcrumb -->
+        <div class="content-action-bar">
+            <button type="button" class="btn-primary-admin" onclick="openCreateModal()">
+                <i class="fas fa-plus"></i> Tambah Butir Menu Baru
+            </button>
+        </div>
+
+        <div class="admin-card">
+            <div class="table-responsive p-3">
+                <table class="table table-hover align-middle w-100" id="tableNavbars">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 50px; text-align:center;">NO</th>
+                            <th>JUDUL MENU</th>
+                            <th>URL TUJUAN</th>
+                            <th style="width: 100px; text-align:center;">STATUS</th>
+                            <th style="text-align: right; width: 130px;">AKSI</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modal Tambah Butir Navbar -->
+        <div class="admin-modal-backdrop" id="modalCreate">
+            <div class="admin-modal-card" style="max-width: 520px;">
+                <div class="admin-modal-head">
+                    <h4 class="admin-modal-title">Tambah Butir Menu Navbar</h4>
+                    <button type="button" class="btn-modal-close" onclick="AdminModal.close('modalCreate')">&times;</button>
+                </div>
+                <form id="formCreate" onsubmit="event.preventDefault(); submitCreate();">
+                    <div class="admin-modal-content">
+                        <div class="form-field-group">
+                            <label class="form-field-label">Judul / Teks Menu <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="cTitle" class="form-field-input" placeholder="Contoh: Program Donasi, Untaian Doa, dsb" required />
+                        </div>
+                        <div class="form-field-group">
+                            <label class="form-field-label">URL Navigasi <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="cUrl" class="form-field-input" placeholder="Contoh: /campaigns, /profile, atau https://..." required />
+                        </div>
+                        <div class="form-field-group mt-2">
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.85rem; font-weight:600;">
+                                <input type="checkbox" id="cActive" style="width:16px; height:16px;" checked />
+                                <span>Status Menu Aktif</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="admin-modal-foot">
+                        <button type="button" class="btn-secondary-admin" onclick="AdminModal.close('modalCreate')">Batal</button>
+                        <button type="submit" class="btn-primary-admin" id="btnSaveCreate">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal Edit Butir Navbar -->
+        <div class="admin-modal-backdrop" id="modalEdit">
+            <div class="admin-modal-card" style="max-width: 520px;">
+                <div class="admin-modal-head">
+                    <h4 class="admin-modal-title">Edit Butir Menu Navbar</h4>
+                    <button type="button" class="btn-modal-close" onclick="AdminModal.close('modalEdit')">&times;</button>
+                </div>
+                <form id="formEdit" onsubmit="event.preventDefault(); submitEdit();">
+                    <input type="hidden" id="editId" />
+                    <div class="admin-modal-content">
+                        <div class="form-field-group">
+                            <label class="form-field-label">Judul / Teks Menu <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="eTitle" class="form-field-input" required />
+                        </div>
+                        <div class="form-field-group">
+                            <label class="form-field-label">URL Navigasi <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="eUrl" class="form-field-input" placeholder="Contoh: /campaigns, /profile, atau https://..." required />
+                        </div>
+                        <div class="form-field-group mt-2">
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.85rem; font-weight:600;">
+                                <input type="checkbox" id="eActive" style="width:16px; height:16px;" />
+                                <span>Status Menu Aktif</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="admin-modal-foot">
+                        <button type="button" class="btn-secondary-admin" onclick="AdminModal.close('modalEdit')">Batal</button>
+                        <button type="submit" class="btn-primary-admin" id="btnSaveEdit">Perbarui</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    var dtNavbars = null;
+    var allNavbars = [];
+
+    $(function () {
+        loadNavbars();
+    });
+
+    function loadNavbars() {
+        $.ajax({
+            url: API_BASE_URL + '/navbars',
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                allNavbars = data || [];
+                renderTable(allNavbars);
+            },
+            error: function () {
+                AdminToast.error('Gagal mengambil data master navbars');
+            }
+        });
+    }
+
+    function renderTable(navbars) {
+        if ($.fn.DataTable.isDataTable('#tableNavbars')) {
+            $('#tableNavbars').DataTable().destroy();
+        }
+
+        dtNavbars = $('#tableNavbars').DataTable({
+            data: navbars || [],
+            columns: [
+                {
+                    data: null,
+                    className: "text-center fw-semibold text-muted",
+                    render: function (data, type, row, meta) {
+                        return meta.row + 1;
+                    }
+                },
+                {
+                    data: "title",
+                    render: function (d, type, row) {
+                        return '<span class="fw-bold text-dark">' + escHtml(d) + '</span>';
+                    }
+                },
+                {
+                    data: "url",
+                    render: function (d) {
+                        return '<span class="url-token-badge">' + escHtml(cleanDisplayUrl(d)) + '</span>';
+                    }
+                },
+                {
+                    data: "isActive",
+                    className: "text-center",
+                    render: function (d) {
+                        return d 
+                            ? '<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Aktif</span>'
+                            : '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1">Non-Aktif</span>';
+                    }
+                },
+                {
+                    data: "id",
+                    className: "text-end",
+                    orderable: false,
+                    render: function (id, type, row) {
+                        return `
+                            <div class="d-inline-flex gap-1">
+                                <button type="button" class="btn-action-icon" title="Edit Navbar" onclick="openEditModal(${id})">
+                                    <i class="fas fa-pen-to-square"></i>
+                                </button>
+                                <button type="button" class="btn-action-icon text-danger" title="Hapus Navbar" onclick="deleteNavbar(${id})">
+                                    <i class="fas fa-trash-can"></i>
+                                </button>
+                            </div>
+                        `;
+                    }
+                }
+            ],
+            order: [[0, "asc"]]
+        });
+    }
+
+    function cleanDisplayUrl(url) {
+        if (!url) return '/';
+        var c = url.replace(/\/\{tenant\}/gi, '').replace(/\{tenant\}/gi, '').replace(/\/\{slug\}/gi, '').replace(/\{slug\}/gi, '');
+        if (!c) return '/';
+        if (!c.startsWith('http') && !c.startsWith('/') && !c.startsWith('#')) c = '/' + c;
+        return c;
+    }
+
+    function openCreateModal() {
+        $('#cTitle').val('');
+        $('#cUrl').val('/');
+        $('#cActive').prop('checked', true);
+        AdminModal.open('modalCreate');
+    }
+
+    function submitCreate() {
+        var payload = {
+            title: $('#cTitle').val().trim(),
+            url: cleanDisplayUrl($('#cUrl').val().trim()),
+            isActive: $('#cActive').is(':checked'),
+            orderIndex: 0
+        };
+
+        if (!payload.title || !payload.url) {
+            AdminToast.error('Judul dan URL wajib diisi');
+            return;
+        }
+
+        $('#btnSaveCreate').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...');
+        $.ajax({
+            url: API_BASE_URL + '/navbars',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function () {
+                AdminModal.close('modalCreate');
+                AdminToast.success('Butir menu navbar berhasil ditambahkan');
+                loadNavbars();
+            },
+            error: function (xhr) {
+                AdminToast.error(xhr.responseJSON?.message || 'Gagal menambahkan butir navbar');
+            },
+            complete: function () {
+                $('#btnSaveCreate').prop('disabled', false).text('Simpan');
+            }
+        });
+    }
+
+    function openEditModal(id) {
+        var item = allNavbars.find(function (x) { return x.id === id; });
+        if (!item) return;
+
+        $('#editId').val(item.id);
+        $('#eTitle').val(item.title);
+        $('#eUrl').val(cleanDisplayUrl(item.url));
+        $('#eActive').prop('checked', item.isActive !== false);
+        AdminModal.open('modalEdit');
+    }
+
+    function submitEdit() {
+        var id = parseInt($('#editId').val());
+        var item = allNavbars.find(function (x) { return x.id === id; });
+
+        var payload = {
+            title: $('#eTitle').val().trim(),
+            url: cleanDisplayUrl($('#eUrl').val().trim()),
+            navbarGroupId: item ? item.navbarGroupId : null,
+            isActive: $('#eActive').is(':checked'),
+            orderIndex: item ? item.orderIndex : 0
+        };
+
+        if (!payload.title || !payload.url) {
+            AdminToast.error('Judul dan URL wajib diisi');
+            return;
+        }
+
+        $('#btnSaveEdit').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Memperbarui...');
+        $.ajax({
+            url: API_BASE_URL + '/navbars/' + id,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function () {
+                AdminModal.close('modalEdit');
+                AdminToast.success('Butir menu navbar berhasil diperbarui');
+                loadNavbars();
+            },
+            error: function (xhr) {
+                AdminToast.error(xhr.responseJSON?.message || 'Gagal memperbarui navbar');
+            },
+            complete: function () {
+                $('#btnSaveEdit').prop('disabled', false).text('Perbarui');
+            }
+        });
+    }
+
+    function deleteNavbar(id) {
+        if (!confirm('Apakah Anda yakin ingin menghapus butir navbar ini?')) return;
+        $.ajax({
+            url: API_BASE_URL + '/navbars/' + id,
+            type: 'DELETE',
+            success: function () {
+                AdminToast.success('Butir navbar berhasil dihapus');
+                loadNavbars();
+            },
+            error: function (xhr) {
+                AdminToast.error(xhr.responseJSON?.message || 'Gagal menghapus navbar');
+            }
+        });
+    }
+</script>
+}

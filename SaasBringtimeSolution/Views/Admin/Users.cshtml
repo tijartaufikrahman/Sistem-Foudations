@@ -1,0 +1,398 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Pengguna";
+}
+
+<style>
+    /* Scoped custom styling for Admin Users */
+    .user-modal-notes {
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+</style>
+
+<!-- Outermost View Wrapper adhering to aturan_styling.txt -->
+<div class="row">
+    <div class="col-12">
+
+<!-- Breadcrumb Bar: Pojok Kanan Atas Mandiri -->
+<div class="content-breadcrumb-bar">
+    <div class="breadcrumb-nav" id="pageBreadcrumb">
+        <span class="breadcrumb-current">Kelola Users</span>
+        <span class="breadcrumb-separator">/</span>
+    </div>
+</div>
+
+<!-- Action Bar: Tombol di bawah Breadcrumb -->
+<div class="content-action-bar">
+    <button type="button" class="btn-primary-admin" onclick="openCreateModal()">
+        <i class="fas fa-plus"></i> Tambah Pengguna
+    </button>
+</div>
+
+<div class="admin-card">
+    <div class="p-3 p-md-4">
+        <table class="table table-hover align-middle w-100" id="tableUsers">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 50px; text-align:center;">NO</th>
+                    <th>PENGGUNA</th>
+                    <th>TELEPON</th>
+                    <th>PERAN (ROLE)</th>
+                    <th>STATUS</th>
+                    <th style="text-align: right; width: 130px;">AKSI</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Tambah Pengguna -->
+<div class="admin-modal-backdrop" id="modalCreate">
+    <div class="admin-modal-card">
+        <div class="admin-modal-head">
+            <h4 class="admin-modal-title">Tambah Pengguna Baru</h4>
+            <button type="button" class="btn-modal-close" onclick="AdminModal.close('modalCreate')">&times;</button>
+        </div>
+        <form id="formCreate" onsubmit="event.preventDefault(); submitCreate();">
+            <div class="admin-modal-content">
+                <div class="form-field-group">
+                    <label class="form-field-label">Nama Lengkap <span style="color:#ef4444;">*</span></label>
+                    <input type="text" id="cName" class="form-field-input" placeholder="Nama lengkap" required />
+                </div>
+                <div class="form-field-group">
+                    <label class="form-field-label">Alamat Email <span style="color:#ef4444;">*</span></label>
+                    <input type="email" id="cEmail" class="form-field-input" placeholder="nama@email.com" required />
+                </div>
+                <div class="form-field-group">
+                    <label class="form-field-label">Nomor Telepon</label>
+                    <input type="text" id="cPhone" class="form-field-input" placeholder="08123456789" />
+                </div>
+                <div class="form-field-group">
+                    <label class="form-field-label">Kata Sandi (Password) <span style="color:#ef4444;">*</span></label>
+                    <input type="password" id="cPass" class="form-field-input" placeholder="Minimal 6 karakter" required />
+                </div>
+                <div class="form-field-group">
+                    <label class="form-field-label">Konfirmasi Kata Sandi <span style="color:#ef4444;">*</span></label>
+                    <input type="password" id="cConf" class="form-field-input" placeholder="Ulangi kata sandi" required />
+                </div>
+            </div>
+            <div class="admin-modal-foot">
+                <button type="button" class="btn-secondary-admin" onclick="AdminModal.close('modalCreate')">Batal</button>
+                <button type="submit" class="btn-primary-admin" id="btnSaveCreate">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Edit Pengguna -->
+<div class="admin-modal-backdrop" id="modalEdit">
+    <div class="admin-modal-card">
+        <div class="admin-modal-head">
+            <h4 class="admin-modal-title">Edit Data Pengguna</h4>
+            <button type="button" class="btn-modal-close" onclick="AdminModal.close('modalEdit')">&times;</button>
+        </div>
+        <form id="formEdit" onsubmit="event.preventDefault(); submitEdit();">
+            <input type="hidden" id="editId" />
+            <div class="admin-modal-content">
+                <div class="form-field-group">
+                    <label class="form-field-label">Nama Lengkap <span style="color:#ef4444;">*</span></label>
+                    <input type="text" id="eName" class="form-field-input" required />
+                </div>
+                <div class="form-field-group">
+                    <label class="form-field-label">Alamat Email <span style="color:#ef4444;">*</span></label>
+                    <input type="email" id="eEmail" class="form-field-input" required />
+                </div>
+                <div class="form-field-group">
+                    <label class="form-field-label">Nomor Telepon</label>
+                    <input type="text" id="ePhone" class="form-field-input" />
+                </div>
+                <div class="form-field-group">
+                    <label class="form-field-label">Ganti Password (Kosongkan jika tidak diubah)</label>
+                    <input type="password" id="ePass" class="form-field-input" placeholder="Password baru..." />
+                </div>
+                <div class="form-field-group" style="margin-top:12px;">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.8rem; font-weight:600;">
+                        <input type="checkbox" id="eActive" style="width:16px; height:16px;" checked />
+                        <span>Status Akun Aktif</span>
+                    </label>
+                </div>
+            </div>
+            <div class="admin-modal-foot">
+                <button type="button" class="btn-secondary-admin" onclick="AdminModal.close('modalEdit')">Batal</button>
+                <button type="submit" class="btn-primary-admin" id="btnSaveEdit">Perbarui</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+    </div> <!-- Close outer col-12 -->
+</div> <!-- Close outer row -->
+
+@section Scripts {
+<script>
+    var dtUsers = null;
+    var allUsers = [];
+    var allRoles = [];
+
+    function renderUserTable(users) {
+        if ($.fn.DataTable.isDataTable('#tableUsers')) {
+            $('#tableUsers').DataTable().destroy();
+        }
+        dtUsers = $('#tableUsers').DataTable({
+            data: users || [],
+            pageLength: 10,
+            lengthMenu: [
+                [10, 25, 50, 100, -1],
+                [10, 25, 50, 100, "Semua"]
+            ],
+            columns: [
+                {
+                    data: null,
+                    className: "text-center fw-bold text-muted",
+                    render: function (data, type, row, meta) {
+                        return meta.row + 1;
+                    }
+                },
+                {
+                    data: 'name',
+                    render: function (data, type, row) {
+                        var initial = (data || row.email || 'U').charAt(0).toUpperCase();
+                        return `
+                            <div class="avatar-cell">
+                                <div class="avatar-circle">${initial}</div>
+                                <div>
+                                    <strong style="color:#0f172a;">${escHtml(data)}</strong>
+                                    <small class="d-block" style="color:#94a3b8; font-size:11px;">${escHtml(row.email)}</small>
+                                </div>
+                            </div>
+                        `;
+                    }
+                },
+                {
+                    data: 'phoneNumber',
+                    render: function (data) {
+                        return escHtml(data || '-');
+                    }
+                },
+                {
+                    data: 'roles',
+                    render: function (data) {
+                        return data ? `<span class="status-pill pill-role">${escHtml(data)}</span>` : '<span style="color:#94a3b8;">-</span>';
+                    }
+                },
+                {
+                    data: 'isActive',
+                    render: function (data) {
+                        return data
+                            ? '<span class="status-pill pill-active"><span class="dot-indicator"></span>Aktif</span>'
+                            : '<span class="status-pill pill-inactive"><span class="dot-indicator"></span>Nonaktif</span>';
+                    }
+                },
+                {
+                    data: 'id',
+                    orderable: false,
+                    className: "text-end",
+                    render: function (data, type, row) {
+                        return `
+                            <button type="button" class="btn-table-action btn-table-edit" onclick="openEdit(${data})">
+                                <i class="fas fa-pen"></i> Edit
+                            </button>
+                            <button type="button" class="btn-table-action btn-table-del" onclick="delUser(${data}, '${escHtml(row.name)}')">
+                                <i class="fas fa-trash"></i> Hapus
+                            </button>
+                        `;
+                    }
+                }
+            ]
+        });
+    }
+
+    function loadUsers() {
+        $.ajax({
+            url: API_BASE_URL + '/users',
+            type: 'GET',
+            dataType: 'json',
+            success: function (users) {
+                allUsers = users || [];
+                renderUserTable(allUsers);
+            },
+            error: function () {
+                AdminToast.error('Gagal mengambil data pengguna');
+                renderUserTable([]);
+            }
+        });
+    }
+
+    window.openCreateModal = function () {
+        $('#formCreate')[0].reset();
+        AdminModal.open('modalCreate');
+    };
+
+    window.submitCreate = function () {
+        var name = $('#cName').val().trim();
+        var email = $('#cEmail').val().trim();
+        var phone = $('#cPhone').val().trim();
+        var p1 = $('#cPass').val();
+        var p2 = $('#cConf').val();
+
+        if (!name) {
+            AdminToast.error('Nama lengkap wajib diisi!');
+            return;
+        }
+        if (!email) {
+            AdminToast.error('Alamat email wajib diisi!');
+            return;
+        }
+        if (!p1) {
+            AdminToast.error('Kata sandi (password) wajib diisi!');
+            return;
+        }
+        if (p1.length < 6) {
+            AdminToast.error('Kata sandi minimal 6 karakter!');
+            return;
+        }
+        if (p1 !== p2) {
+            AdminToast.error('Konfirmasi kata sandi tidak cocok!');
+            return;
+        }
+
+        var payload = {
+            name: name,
+            email: email,
+            phoneNumber: phone ? phone : null,
+            password: p1
+        };
+
+        $('#btnSaveCreate').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Menyimpan...');
+
+        $.ajax({
+            url: API_BASE_URL + '/users',
+            type: 'POST',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function (res) {
+                $('#btnSaveCreate').prop('disabled', false).text('Simpan');
+                AdminModal.close('modalCreate');
+                AdminToast.success(res.message || 'Pengguna berhasil ditambahkan');
+                loadUsers();
+            },
+            error: function (xhr) {
+                $('#btnSaveCreate').prop('disabled', false).text('Simpan');
+                var msg = 'Gagal menyimpan pengguna';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    } else if (xhr.responseJSON.errors) {
+                        var errList = [];
+                        for (var k in xhr.responseJSON.errors) {
+                            errList.push(xhr.responseJSON.errors[k].join(', '));
+                        }
+                        msg = errList.join('; ');
+                    }
+                }
+                AdminToast.error(msg);
+            }
+        });
+    };
+
+    window.openEdit = function (id) {
+        var u = allUsers.find(function (x) { return x.id === id; });
+        if (!u) return;
+
+        $('#editId').val(u.id);
+        $('#eName').val(u.name);
+        $('#eEmail').val(u.email);
+        $('#ePhone').val(u.phoneNumber || '');
+        $('#ePass').val('');
+        $('#eActive').prop('checked', u.isActive);
+
+        AdminModal.open('modalEdit');
+    };
+
+    window.submitEdit = function () {
+        var id = parseInt($('#editId').val());
+        var name = $('#eName').val().trim();
+        var email = $('#eEmail').val().trim();
+        var phone = $('#ePhone').val().trim();
+        var passVal = $('#ePass').val();
+
+        if (!name) {
+            AdminToast.error('Nama lengkap wajib diisi!');
+            return;
+        }
+        if (!email) {
+            AdminToast.error('Alamat email wajib diisi!');
+            return;
+        }
+
+        var payload = {
+            id: id,
+            name: name,
+            email: email,
+            phoneNumber: phone ? phone : null,
+            isActive: $('#eActive').is(':checked'),
+            password: passVal ? passVal : null
+        };
+
+        $('#btnSaveEdit').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Menyimpan...');
+
+        $.ajax({
+            url: API_BASE_URL + '/users/' + id,
+            type: 'PUT',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function (res) {
+                $('#btnSaveEdit').prop('disabled', false).text('Perbarui');
+                AdminModal.close('modalEdit');
+                AdminToast.success(res.message || 'Data pengguna berhasil diperbarui');
+                loadUsers();
+            },
+            error: function (xhr) {
+                $('#btnSaveEdit').prop('disabled', false).text('Perbarui');
+                var msg = 'Gagal memperbarui pengguna';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    } else if (xhr.responseJSON.errors) {
+                        var errList = [];
+                        for (var k in xhr.responseJSON.errors) {
+                            errList.push(xhr.responseJSON.errors[k].join(', '));
+                        }
+                        msg = errList.join('; ');
+                    }
+                }
+                AdminToast.error(msg);
+            }
+        });
+    };
+
+    window.delUser = function (id, name) {
+        if (confirm('Apakah Anda yakin ingin menghapus akun ' + name + '?')) {
+            $.ajax({
+                url: API_BASE_URL + '/users/' + id,
+                type: 'DELETE',
+                dataType: 'json',
+                success: function (res) {
+                    AdminToast.success(res && res.message ? res.message : 'Pengguna berhasil dihapus');
+                    loadUsers();
+                },
+                error: function (xhr) {
+                    var msg = 'Gagal menghapus pengguna';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    }
+                    AdminToast.error(msg);
+                }
+            });
+        }
+    };
+
+    $(function () {
+        loadUsers();
+    });
+</script>
+}

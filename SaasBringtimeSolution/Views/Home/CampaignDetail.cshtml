@@ -1,0 +1,293 @@
+@{
+    Layout = "_PublicLayout";
+    ViewData["Title"] = "Detail Campaign";
+    var slug = ViewData["Slug"] as string;
+}
+
+<style>
+    .campaign-banner-aspect {
+        position: relative;
+        padding-top: 56.25%;
+    }
+    .campaign-banner-img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .campaign-sticky-sidebar {
+        top: 100px;
+    }
+    .campaign-btn-donate {
+        background: linear-gradient(135deg, #0d9488, #0f766e);
+        color: white;
+        border: none;
+        border-radius: 12px;
+    }
+    .campaign-btn-donate:hover {
+        background: linear-gradient(135deg, #0f766e, #115e59);
+        color: white;
+    }
+    .campaign-mobile-bar {
+        z-index: 1020;
+    }
+</style>
+
+<div class="row">
+    <div class="col-12 px-0">
+        <div id="campaignLoading" class="text-center py-5">
+            <div class="spinner-border text-teal" role="status" style="color: var(--brand-teal);"></div>
+        </div>
+
+        <div id="campaignContent" style="display: none;" class="py-4">
+            <div class="container">
+                <div class="row g-4">
+                    <div class="col-lg-8">
+                        <!-- Banner -->
+                        <div class="rounded-4 overflow-hidden mb-4 shadow-sm campaign-banner-aspect">
+                            <img id="cBanner" src="" alt="Banner" class="campaign-banner-img">
+                        </div>
+                        
+                        <h1 id="cTitle" class="fw-bold mb-3 fs-3">Judul Campaign</h1>
+                        
+                        <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
+                            <img id="fLogo" src="" alt="Logo" class="rounded-circle shadow-sm me-3" style="width: 48px; height: 48px; object-fit: contain;">
+                            <div>
+                                <p class="mb-0 text-muted small">Diselenggarakan oleh</p>
+                                <a id="fLink" href="#" class="fw-bold text-dark text-decoration-none d-flex align-items-center gap-1">
+                                    <span id="fName">Nama Yayasan</span>
+                                    <i class="fas fa-check-circle text-primary small"></i>
+                                </a>
+                            </div>
+                            <span id="cCategory" class="badge bg-light text-dark ms-auto border rounded-pill px-3 py-2">Kategori</span>
+                        </div>
+                        
+                        <div class="mb-5">
+                            <h5 class="fw-bold mb-3">Cerita Penggalangan Dana</h5>
+                            <div id="cDesc" class="text-muted lh-lg" style="white-space: pre-line;">
+                                Deskripsi campaign akan muncul di sini.
+                            </div>
+                        </div>
+                        
+                        <!-- Doa & Dukungan -->
+                        <div class="mb-5">
+                            <h5 class="fw-bold mb-3">Doa & Dukungan</h5>
+                            <div id="donationsList" class="bg-white rounded-4 shadow-sm p-3">
+                                <div class="text-center py-4 text-muted small">Memuat donatur...</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4">
+                        <div class="bg-white rounded-4 shadow-sm p-4 sticky-top campaign-sticky-sidebar">
+                            <h4 class="fw-bold text-teal mb-1" id="cCollected" style="color: var(--brand-teal-dark);">Rp0</h4>
+                            <p class="text-muted small mb-3">terkumpul dari target <span id="cTarget">Rp0</span></p>
+                            
+                            <div class="progress-custom mb-3" style="height: 10px;">
+                                <div id="cProgressBar" class="progress-bar-custom" style="width: 0%"></div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between text-muted small fw-semibold mb-4">
+                                <span id="cProgressPercent">0%</span>
+                                <span id="cDaysLeft"><i class="far fa-clock"></i> - hari lagi</span>
+                            </div>
+                            
+                            <a id="btnDonate" href="#" class="btn campaign-btn-donate btn-lg d-block mb-3 text-center fw-bold shadow-sm">
+                                <i class="fas fa-heart me-2"></i> Donasi Sekarang
+                            </a>
+                            
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary w-100 rounded-3 fw-semibold dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="btnShare">
+                                    <i class="fas fa-share-nodes me-2"></i> Bagikan Program
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end w-100 shadow-sm border-0 mt-1 p-2 rounded-3">
+                                    <li>
+                                        <a class="dropdown-item py-2 rounded-2 text-success fw-semibold" href="#" id="shareWa" onclick="shareWhatsApp(event)">
+                                            <i class="fab fa-whatsapp me-2 fs-5"></i> Kirim ke WhatsApp
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item py-2 rounded-2 text-primary fw-semibold" href="#" id="shareTwitter" onclick="shareTwitter(event)">
+                                            <i class="fab fa-x-twitter me-2 fs-5"></i> Bagikan ke X / Twitter
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider my-1"></li>
+                                    <li>
+                                        <button type="button" class="dropdown-item py-2 rounded-2 fw-semibold text-dark" id="btnCopyLink" onclick="copyCampaignLink(event)">
+                                            <i class="fas fa-link me-2 text-muted"></i> Salin Tautan
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Fixed Bottom Floating Bar -->
+        <div class="d-lg-none fixed-bottom bg-white border-top p-3 shadow-lg campaign-mobile-bar" id="mobileStickyBar">
+            <div class="container d-flex align-items-center justify-content-between gap-3">
+                <div>
+                    <div class="small text-muted" style="font-size: 11px;">Terkumpul</div>
+                    <div class="fw-bold text-teal" id="mStickyCollected" style="color:var(--brand-teal); font-size:14px;">Rp 0</div>
+                </div>
+                <a id="btnDonateMobile" href="#" class="btn btn-teal text-white rounded-pill px-4 py-2 fw-bold shadow-sm" style="background: var(--brand-teal);">
+                    <i class="fas fa-heart me-1"></i> Donasi
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var currentSlug = '@slug';
+        var campaignId = 0;
+        var campaignData = null;
+        
+        function shareWhatsApp(e) {
+            if (e) e.preventDefault();
+            var text = encodeURIComponent('Mari bantu program: ' + (campaignData ? campaignData.title : 'Program Donasi') + ' melalui link berikut: ' + window.location.href);
+            window.open('https://api.whatsapp.com/send?text=' + text, '_blank');
+        }
+
+        function shareTwitter(e) {
+            if (e) e.preventDefault();
+            var text = encodeURIComponent('Bantu program donasi: ' + (campaignData ? campaignData.title : 'Program Kebaikan') + ' via Bringtime Solution: ' + window.location.href);
+            window.open('https://twitter.com/intent/tweet?text=' + text, '_blank');
+        }
+
+        function copyCampaignLink(e) {
+            if (e) e.preventDefault();
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(window.location.href).then(function() {
+                    alert('Tautan program berhasil disalin ke clipboard!');
+                }).catch(function() {
+                    prompt('Salin link program donasi ini:', window.location.href);
+                });
+            } else {
+                prompt('Salin link program donasi ini:', window.location.href);
+            }
+        }
+
+        function loadDonations() {
+            $.ajax({
+                url: API_BASE_URL + '/donations/campaign/' + campaignId,
+                type: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    var html = '';
+                    var validDonations = (data || []).filter(function(d) {
+                        var st = (d.paymentStatus || d.status || '').toUpperCase();
+                        return st === 'PAID' || st === 'SUCCESS';
+                    });
+                    
+                    if (validDonations.length > 0) {
+                        validDonations.slice(0, 10).forEach(function(d) {
+                            var name = d.isAnonymous ? 'Hamba Allah' : (d.donorName || 'Donatur');
+                            var initial = (name.trim().charAt(0) || 'H').toUpperCase();
+                            var date = new Date(d.createdAt);
+                            var timeAgo = timeSince(date);
+                            
+                            html += `
+                                <div class="donation-item py-3 border-bottom">
+                                    <div class="d-flex align-items-start gap-3">
+                                        <div class="donation-avatar rounded-circle d-flex align-items-center justify-content-center fw-bold text-white shadow-sm flex-shrink-0" style="width:42px;height:42px;background:linear-gradient(135deg, #0d9488, #0f766e); font-size:14px;">${initial}</div>
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <h6 class="mb-0 fw-bold text-dark" style="font-size:13.5px;">${name}</h6>
+                                                <small class="text-muted" style="font-size:11px;">${timeAgo}</small>
+                                            </div>
+                                            <div class="fw-bold text-teal mb-1" style="color: var(--brand-teal); font-size:13px;">Berdonasi ${formatRupiah(d.amount)}</div>
+                                            ${d.prayerMessage ? `<div class="doa-box p-2 rounded-3 mt-2 bg-light border text-secondary fst-italic small" style="font-size:12px; line-height:1.4;">"${d.prayerMessage}"</div>` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        html = '<div class="text-center py-4 text-muted small"><i class="fas fa-hand-holding-heart mb-2 fa-2x d-block opacity-50"></i>Belum ada donasi. Jadilah orang baik pertama yang berdonasi!</div>';
+                    }
+                    $('#donationsList').html(html);
+                }
+            });
+        }
+        
+        function timeSince(date) {
+            var seconds = Math.floor((new Date() - date) / 1000);
+            if (seconds < 60) return "Baru saja";
+            var interval = seconds / 31536000;
+            if (interval >= 1) return Math.floor(interval) + " tahun lalu";
+            interval = seconds / 2592000;
+            if (interval >= 1) return Math.floor(interval) + " bulan lalu";
+            interval = seconds / 86400;
+            if (interval >= 1) return Math.floor(interval) + " hari lalu";
+            interval = seconds / 3600;
+            if (interval >= 1) return Math.floor(interval) + " jam lalu";
+            interval = seconds / 60;
+            if (interval >= 1) return Math.floor(interval) + " menit lalu";
+            return Math.floor(seconds) + " detik lalu";
+        }
+
+        $(function() {
+            $.ajax({
+                url: API_BASE_URL + '/campaigns/slug/' + currentSlug,
+                type: 'GET',
+                dataType: 'json',
+                success: function(c) {
+                    $('#campaignLoading').hide();
+                    $('#campaignContent').show();
+                    
+                    campaignId = c.id;
+                    campaignData = c;
+                    
+                    $('#cBanner').attr('src', c.bannerUrl || 'https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=800&auto=format&fit=crop&q=80');
+                    $('#cTitle').text(c.title);
+                    $('#cCategory').text(c.category ? c.category.replace('_', ' ').toUpperCase() : 'DONASI');
+                    $('#cDesc').text(c.description || 'Tidak ada deskripsi rinci untuk program ini.');
+                    
+                    if (c.foundation) {
+                        $('#fLogo').attr('src', c.foundation.logoUrl || 'https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=100&auto=format&fit=crop&q=60');
+                        $('#fName').text(c.foundation.name);
+                        $('#fLink').attr('href', '/');
+                    }
+                    
+                    var collectedStr = formatRupiah(c.collectedAmount);
+                    var targetStr = formatRupiah(c.targetAmount);
+                    $('#cCollected, #mStickyCollected').text(collectedStr);
+                    $('#cTarget').text(targetStr);
+                    
+                    var progress = c.targetAmount > 0 ? Math.min(100, Math.round((c.collectedAmount / c.targetAmount) * 100)) : 0;
+                    $('#cProgressBar').css('width', progress + '%');
+                    $('#cProgressPercent').text(progress + '% tercapai');
+                    
+                    var donateUrl = '/Donate/' + encodeURIComponent(currentSlug);
+                    if (c.endDate) {
+                        var end = new Date(c.endDate);
+                        var now = new Date();
+                        var diffTime = end - now;
+                        var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                        if (end < now) {
+                            $('#cDaysLeft').html('<i class="far fa-clock text-danger"></i> Berakhir');
+                            $('#btnDonate, #btnDonateMobile').addClass('disabled').text('Campaign Selesai').css('pointer-events', 'none');
+                        } else {
+                            $('#cDaysLeft').html('<i class="far fa-clock text-teal"></i> ' + diffDays + ' hari lagi');
+                            $('#btnDonate, #btnDonateMobile').attr('href', donateUrl);
+                        }
+                    } else {
+                        $('#cDaysLeft').html('<i class="far fa-clock text-muted"></i> Tanpa batas waktu');
+                        $('#btnDonate, #btnDonateMobile').attr('href', donateUrl);
+                    }
+                    
+                    loadDonations();
+                },
+                error: function() {
+                    $('#campaignLoading').html('<div class="alert alert-danger text-center">Campaign tidak ditemukan atau belum aktif.</div>');
+                }
+            });
+        });
+    </script>
+}

@@ -1,0 +1,586 @@
+@inject SaasBringtimeSolution.Services.IFoundationService FoundationService
+@{
+    var currentFoundation = await FoundationService.GetCurrentFoundationAsync();
+    var foundationId = FoundationService.GetConfiguredFoundationId();
+    var foundationName = currentFoundation?.Name ?? "Portal Mitra";
+    var foundationSlug = currentFoundation?.Slug ?? "";
+}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - @foundationName</title>
+
+    <!-- Google Font: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+    <!-- Bootstrap 5 (Grid & Layout Helpers only) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+    <!-- DataTables 1.13.7 Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
+
+    <!-- Custom Handcrafted Admin CSS -->
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+
+    <script>
+        window.CONFIGURED_FOUNDATION_ID = @foundationId;
+        window.CONFIGURED_FOUNDATION_NAME = "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(foundationName))";
+        window.CONFIGURED_FOUNDATION_SLUG = "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(foundationSlug))";
+    </script>
+</head>
+<body>
+    <!-- Main Outer Fluid Container adhering to aturan_styling.txt -->
+    <div class="container-fluid overflow-hidden px-0 position-relative min-vh-100">
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="/Foundation/Dashboard" id="sidebarBrandLink" class="sidebar-brand">
+                    <div class="brand-icon-box" id="sidebarBrandIconBox">
+                        <i class="fas fa-hand-holding-heart" id="sidebarBrandIcon"></i>
+                    </div>
+                    <div class="brand-text-block" style="min-width:0; max-width:185px;">
+                        <h3 class="brand-name" id="sidebarBrandName" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin:0;" title="@foundationName">@foundationName</h3>
+                    </div>
+                </a>
+            </div>
+
+            <div class="sidebar-nav-container" id="sidebarNav">
+                <div id="dynamicSidebarMenus">
+                    <!-- Nav items generated immediately -->
+                </div>
+            </div>
+
+            <div class="sidebar-bottom">
+                <button type="button" id="btnLogout" class="btn-sidebar-exit-wide" title="Keluar dari Sistem" onclick="handleAppLogout()">
+                    <i class="fas fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button type="button" class="btn-menu-toggle" id="menuToggle" aria-label="Toggle Sidebar" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="topbar-page-label">
+                    <h2 class="topbar-page-title">@ViewData["Title"]</h2>
+                </div>
+            </div>
+
+            <div class="topbar-right">
+                <a href="/" target="_blank" class="btn-topbar-link" id="btnTopbarWebPublik">
+                    <i class="fas fa-arrow-up-right-from-square"></i> Web Publik
+                </a>
+                <div class="topbar-user-card">
+                    <div class="topbar-user-avatar" id="headerUserAvatar">A</div>
+                    <div class="topbar-user-meta">
+                        <div class="topbar-user-name" id="headerUserName" title="Administrator">Administrator</div>
+                        <div class="topbar-user-role">
+                            <span class="role-status-dot"></span>
+                            <span id="headerUserRole">Super Admin</span>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn-topbar-exit" onclick="handleAppLogout()" title="Keluar dari Akun">
+                    <i class="fas fa-arrow-right-from-bracket"></i>
+                    <span class="d-none d-sm-inline">Logout</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <div class="main-content" id="mainContent">
+            @RenderBody()
+        </div>
+
+        <!-- Mobile Overlay Backdrop -->
+        <div class="sidebar-overlay-backdrop" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
+    </div>
+
+    <!-- Core Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- DataTables 1.13.7 Core & Bootstrap 5 Integration -->
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+
+    <script src="~/js/api-config.js" asp-append-version="true"></script>
+    <script src="~/js/admin.js" asp-append-version="true"></script>
+
+    <script>
+        $(function () {
+            // 1. Validasi Sesi Pengguna
+            var currentScope = AuthSession.getCurrentScope();
+            var currentUser = AuthSession.getUser(currentScope);
+            if (!currentUser) {
+                AuthSession.redirectToLogin();
+                return;
+            }
+            // Pastikan Cookie terisi
+            AuthSession.setUser(currentUser, currentScope);
+
+            var name = currentUser.name || currentUser.namaLengkap || currentUser.email || 'Pengguna';
+            var rolesArr = currentUser.roles || [];
+            if (!rolesArr || rolesArr.length === 0) {
+                if (currentUser.roleName) {
+                    rolesArr = [currentUser.roleName];
+                } else {
+                    AuthSession.removeUser(currentScope);
+                    alert('Akun Anda belum memiliki hak akses peran (User Roles). Silakan hubungi Administrator.');
+                    AuthSession.redirectToLogin();
+                    return;
+                }
+            }
+
+            var role = rolesArr[0] || currentUser.roleName || 'Pengguna';
+            var initial = (name.trim().charAt(0) || 'U').toUpperCase();
+            var curPath = window.location.pathname.toLowerCase();
+            var roleLower = (role || '').toLowerCase();
+            var isDonor = roleLower.includes('donor') || roleLower.includes('donatur');
+            var isSuperAdmin = rolesArr.some(function(r) {
+                var l = (r || '').toLowerCase();
+                return l.includes('super') || l === 'super_admin';
+            }) || currentUser.roleId === 4 || (currentUser.roleIds && currentUser.roleIds.indexOf(4) !== -1);
+            var isFoundationAdmin = rolesArr.some(function(r) {
+                var l = (r || '').toLowerCase();
+                return l.includes('foundation') || l.includes('yayasan');
+            }) || currentUser.roleId === 5 || (currentUser.roleIds && currentUser.roleIds.indexOf(5) !== -1);
+            var fSlug = window.CONFIGURED_FOUNDATION_SLUG || currentUser.foundationSlug || '';
+
+            // Standard MVC homeUrl (tanpa prefix slug)
+            var homeUrl = isDonor ? '/Donor/Dashboard' : (isFoundationAdmin ? '/Foundation/Dashboard' : '/Dashboard');
+            var webPublikUrl = '/';
+
+            $('#headerUserName').text(name).attr('title', name);
+            $('#headerUserRole').text(role);
+            $('#headerUserAvatar').text(initial);
+            $('#sidebarBrandLink').attr('href', homeUrl);
+            $('#btnTopbarWebPublik').attr('href', webPublikUrl);
+
+            var fDisplayName = currentUser.foundationName || window.CONFIGURED_FOUNDATION_NAME || 'Portal Mitra';
+            $('#sidebarBrandName').text(fDisplayName).attr('title', fDisplayName);
+            $('#sidebarBrandIcon').removeClass().addClass('fas fa-hand-holding-heart');
+
+            var fIdToLoad = window.CONFIGURED_FOUNDATION_ID || currentUser.foundationId;
+            if (fIdToLoad > 0) {
+                $.ajax({
+                    url: API_BASE_URL + '/foundations/' + fIdToLoad,
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(found) {
+                        if (found && found.name) {
+                            $('#sidebarBrandName').text(found.name).attr('title', found.name);
+                            if (found.logoUrl) {
+                                $('#sidebarBrandIconBox').html('<img src="' + found.logoUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" onerror="this.outerHTML=\'<i class=\\\'fas fa-hand-holding-heart\\\'></i>\'">');
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Handler Logout Instan & Tuntas
+            window.handleAppLogout = function () {
+                try {
+                    if (window.AuthSession && AuthSession.clearAll) {
+                        AuthSession.clearAll();
+                    } else if (window.AuthSession && AuthSession.removeUser) {
+                        AuthSession.removeUser();
+                    }
+                } catch(e) {}
+                window.location.href = '/Auth/Logout';
+            };
+
+            // Helper universal pembentuk URL menu website yayasan mandiri
+            function formatMenuUrl(rawUrl, slug) {
+                if (!rawUrl || rawUrl === '#') return '#';
+                var u = rawUrl.trim();
+                var lower = u.toLowerCase();
+
+                // Abaikan URL eksternal
+                if (lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('//')) {
+                    return u;
+                }
+
+                // Bersihkan prefix slug legacy jika ada (contoh: /{slug}/dashboard -> /dashboard)
+                var currentSlug = (slug || window.CONFIGURED_FOUNDATION_SLUG || '').toLowerCase();
+                if (currentSlug) {
+                    var slugPrefix = '/' + currentSlug;
+                    if (lower === slugPrefix) return homeUrl;
+                    if (lower.startsWith(slugPrefix + '/')) {
+                        lower = lower.substring(slugPrefix.length);
+                        u = u.substring(slugPrefix.length);
+                    }
+                }
+
+                // Pemetaan URL Bersih (Clean Controller / Action)
+                if (lower === '/dashboard-donor' || lower === '/my-dashboard' || lower.indexOf('/donor/dashboard') === 0) {
+                    return '/Donor/Dashboard';
+                }
+                if (lower.indexOf('/foundation/dashboard') === 0) {
+                    return '/Foundation/Dashboard';
+                }
+                if (lower === '/dashboard') {
+                    return isSuperAdmin ? '/Dashboard' : (isDonor ? '/Donor/Dashboard' : '/Foundation/Dashboard');
+                }
+                if (lower === '/kelola-campaign' || lower === '/manage-campaigns' || lower === '/campaigns' || lower === '/admin/campaigns' || lower.indexOf('/foundation/campaigns') === 0) {
+                    return '/Foundation/Campaigns';
+                }
+                if (lower === '/newsposts' || lower === '/berita' || lower.indexOf('/foundation/newsposts') === 0) {
+                    return '/Foundation/NewsPosts';
+                }
+                if (lower === '/donations' || lower === '/donasi' || lower.indexOf('/foundation/donations') === 0) {
+                    return '/Foundation/Donations';
+                }
+                if (lower === '/settings' || lower === '/pengaturan' || lower.indexOf('/foundation/settings') === 0) {
+                    return '/Foundation/Settings';
+                }
+                if (lower === '/history' || lower === '/riwayat-donasi' || lower.indexOf('/donor/history') === 0) {
+                    return '/Donor/History';
+                }
+                if (lower === '/profile' || lower === '/my-profile' || lower === '/profil-saya' || lower.indexOf('/donor/profile') === 0) {
+                    return '/Donor/Profile';
+                }
+
+                if (!u.startsWith('/')) {
+                    u = '/' + u;
+                }
+
+                return u;
+            }
+
+            // 3. Fungsi Render Navigasi (100% Mengikuti Urutan OrderIndex dari Menu Roles, Mendukung Single Menu & Dropdown Grup)
+            function renderNavigation(items) {
+                if (!items || items.length === 0) return;
+
+                var curPathClean = window.location.pathname.toLowerCase().replace(/\/+$/, '');
+
+                // Urutkan item murni berdasarkan orderIndex yang diset di Menu Roles
+                items.sort(function (a, b) {
+                    return (a.orderIndex || 0) - (b.orderIndex || 0);
+                });
+
+                var html = '';
+
+                items.forEach(function (m, idx) {
+                    var isGroup = (m.targetType === 'group' || (m.subMenus && m.subMenus.length > 0));
+                    var label = m.label || m.namaMenu || m.name || (isGroup ? 'Grup' : 'Menu');
+                    var iconClass = m.icon || m.iconClass || (isGroup ? 'fas fa-folder' : 'fas fa-circle-dot');
+
+                    if (isGroup) {
+                        var groupId = m.groupId || m.id || ('g' + idx);
+                        var subItems = m.subMenus || [];
+                        // Urutkan sub-menu berdasarkan orderIndex
+                        subItems.sort(function (a, b) {
+                            return (a.orderIndex || 0) - (b.orderIndex || 0);
+                        });
+
+                        // Cek apakah ada child subMenu yang aktif
+                        var hasActiveChild = false;
+                        var subHtml = '';
+                        subItems.forEach(function (sub) {
+                            var sUrl = formatMenuUrl(sub.url || sub.routeUrl || '#', fSlug);
+                            var sUrlClean = sUrl.toLowerCase().replace(/\/+$/, '');
+                            var isChildActive = (curPathClean === sUrlClean || (sUrlClean !== '' && sUrlClean !== '/' && curPathClean.startsWith(sUrlClean + '/')));
+                            if (isChildActive) {
+                                hasActiveChild = true;
+                                updatePageBreadcrumb(label, sub.label || sub.namaMenu || 'Sub Menu');
+                            }
+                            var sIcon = sub.icon || sub.iconClass || 'fas fa-circle-dot';
+                            var sLabel = sub.label || sub.namaMenu || 'Sub Menu';
+
+                            subHtml += `
+                                <a class="sidebar-sublink ${isChildActive ? 'active' : ''}" href="${sUrl}">
+                                    <i class="${sIcon} sublink-icon"></i>
+                                    <span>${sLabel}</span>
+                                </a>
+                            `;
+                        });
+
+                        var shouldOpen = (hasActiveChild || m.isOpenDefault === true || m.defaultOpen === true);
+
+                        html += `
+                            <div class="sidebar-dropdown">
+                                <button type="button" class="sidebar-dropdown-toggle ${hasActiveChild ? 'active' : ''}" data-bs-toggle="collapse" data-bs-target="#sidebarGroup-${groupId}" aria-expanded="${shouldOpen ? 'true' : 'false'}">
+                                    <i class="${iconClass} link-icon"></i>
+                                    <span class="sidebar-dropdown-label">${label}</span>
+                                    <i class="fas fa-chevron-right dropdown-chevron"></i>
+                                </button>
+                                <div class="collapse ${shouldOpen ? 'show' : ''}" id="sidebarGroup-${groupId}">
+                                    <div class="sidebar-submenu">
+                                        ${subHtml}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        var mUrl = formatMenuUrl(m.url || m.routeUrl || '#', fSlug);
+                        var mUrlClean = mUrl.toLowerCase().replace(/\/+$/, '');
+                        var isActive = (curPathClean === mUrlClean || (mUrlClean !== '' && mUrlClean !== '/' && curPathClean.startsWith(mUrlClean + '/')));
+                        if (isActive) {
+                            updatePageBreadcrumb(label);
+                        }
+
+                        html += `
+                            <a class="sidebar-link ${isActive ? 'active' : ''}" href="${mUrl}">
+                                <i class="${iconClass} link-icon"></i>
+                                <span>${label}</span>
+                            </a>
+                        `;
+                    }
+                });
+
+                function updatePageBreadcrumb(level1, level2) {
+                    if (!level1) return;
+                    var $bc = $('#pageBreadcrumb');
+                    if ($bc.length) {
+                        if (!level2) {
+                            $bc.html(`
+                                <span class="breadcrumb-current">${level1}</span>
+                                <span class="breadcrumb-separator">/</span>
+                            `);
+                        } else {
+                            $bc.html(`
+                                <span class="breadcrumb-parent">${level1}</span>
+                                <span class="breadcrumb-separator">/</span>
+                                <span class="breadcrumb-current">${level2}</span>
+                            `);
+                        }
+                    }
+                }
+
+                $('#dynamicSidebarMenus').html(html);
+            }
+
+            // 4. Sinkronisasi & Otorisasi Menu Dinamis dari Backend Database (dengan Local Cache Instant)
+            function fetchAndSyncMenus(rIds) {
+                if (!rIds || rIds.length === 0) return;
+
+                var menuCacheKey = 'bringtime_menus_' + rIds.join('_') + '_' + (fSlug || 'root');
+                var cachedMenuStr = sessionStorage.getItem(menuCacheKey) || sessionStorage.getItem('saaso_menus_' + rIds.join('_') + '_' + (fSlug || 'root'));
+                if (cachedMenuStr) {
+                    try {
+                        var cachedMenus = JSON.parse(cachedMenuStr);
+                        if (Array.isArray(cachedMenus) && cachedMenus.length > 0) {
+                            renderNavigation(cachedMenus);
+                            var firstUrl = '';
+                            for (var c = 0; c < cachedMenus.length; c++) {
+                                if (cachedMenus[c].targetType === 'group' && Array.isArray(cachedMenus[c].subMenus) && cachedMenus[c].subMenus.length > 0) {
+                                    var fSub = cachedMenus[c].subMenus.find(function(s) { return s.url && s.url !== '#'; });
+                                    if (fSub) { firstUrl = fSub.url; break; }
+                                } else if (cachedMenus[c].url && cachedMenus[c].url !== '#') {
+                                    firstUrl = cachedMenus[c].url; break;
+                                }
+                            }
+                            if (firstUrl) {
+                                $('#sidebarBrandLink').attr('href', firstUrl);
+                            }
+                        }
+                    } catch (e) {}
+                }
+
+                var allMenus = [];
+                var promises = rIds.map(function (rid) {
+                    return $.ajax({
+                        url: API_BASE_URL + '/menuroles/role/' + rid,
+                        type: 'GET',
+                        dataType: 'json'
+                    }).then(function (menus) {
+                        if (Array.isArray(menus) && menus.length > 0) {
+                            allMenus = allMenus.concat(menus);
+                        }
+                    }).catch(function () {});
+                });
+
+                Promise.all(promises).then(function () {
+                    if (allMenus.length > 0) {
+                        allMenus.sort(function (a, b) { return (a.orderIndex || 0) - (b.orderIndex || 0); });
+
+                        var unique = [];
+                        var seen = new Set();
+                        allMenus.forEach(function (m) {
+                            if (m.targetType === 'group') {
+                                var gKey = 'group_' + (m.groupId || m.id);
+                                if (!seen.has(gKey)) {
+                                    seen.add(gKey);
+                                    var adaptedSubs = (m.subMenus || []).map(function (sub) {
+                                        var finalChildUrl = formatMenuUrl(sub.url || sub.routeUrl || '#', fSlug);
+                                        return Object.assign({}, sub, { url: finalChildUrl });
+                                    });
+                                    var clonedGroup = Object.assign({}, m, { subMenus: adaptedSubs });
+                                    unique.push(clonedGroup);
+                                }
+                            } else {
+                                var finalUrl = formatMenuUrl(m.url || m.routeUrl || '#', fSlug);
+                                var u = finalUrl.toLowerCase();
+                                if (!seen.has(u)) {
+                                    seen.add(u);
+                                    var clonedM = Object.assign({}, m, { url: finalUrl });
+                                    unique.push(clonedM);
+                                }
+                            }
+                        });
+
+                        // Set homeUrl dinamis ke menu pertama yang valid
+                        for (var uIdx = 0; uIdx < unique.length; uIdx++) {
+                            var uItem = unique[uIdx];
+                            if (uItem.targetType === 'group' && Array.isArray(uItem.subMenus) && uItem.subMenus.length > 0) {
+                                var validSub = uItem.subMenus.find(function(s) { return s.url && s.url !== '#'; });
+                                if (validSub) { homeUrl = validSub.url; break; }
+                            } else if (uItem.url && uItem.url !== '#') {
+                                homeUrl = uItem.url; break;
+                            }
+                        }
+                        if (homeUrl) {
+                            $('#sidebarBrandLink').attr('href', homeUrl);
+                        }
+
+                        renderNavigation(unique);
+                        try {
+                            sessionStorage.setItem(menuCacheKey, JSON.stringify(unique));
+                        } catch (e) {}
+
+                        // 5. Universal Dynamic Menu Authorization Middleware (100% Dinamis):
+                        // Memastikan halaman yang diakses ada dalam daftar menu yang diizinkan untuk peran pengguna.
+                        var currentClean = curPath.replace(/\/+$/, '');
+                        var defaultHome = (homeUrl || '').toLowerCase().replace(/\/+$/, '');
+
+                        // Kumpulkan seluruh rute yang diizinkan (baik format slug tenant maupun format generic)
+                        var allowedUrls = new Set();
+                        function registerAllowed(rawUrl) {
+                            var u = (rawUrl || '').toLowerCase().replace(/\/+$/, '');
+                            if (u && u !== '#') {
+                                allowedUrls.add(u);
+                                if (fSlug) {
+                                    var fSlugPrefix = '/' + fSlug.toLowerCase();
+                                    if (u.indexOf(fSlugPrefix) === 0) {
+                                        var cleanSub = u.substring(fSlugPrefix.length) || '/';
+                                        allowedUrls.add(cleanSub);
+                                        if (cleanSub === '/dashboard-donor') {
+                                            allowedUrls.add(fSlugPrefix + '/my-dashboard');
+                                            allowedUrls.add(fSlugPrefix + '/donor/dashboard');
+                                            allowedUrls.add(fSlugPrefix + '/donor/dashboard-donor');
+                                        } else if (cleanSub === '/history') {
+                                            allowedUrls.add(fSlugPrefix + '/riwayat-donasi');
+                                            allowedUrls.add(fSlugPrefix + '/donor/history');
+                                        } else if (cleanSub === '/my-profile') {
+                                            allowedUrls.add(fSlugPrefix + '/profil-saya');
+                                            allowedUrls.add(fSlugPrefix + '/donor/profile');
+                                        } else if (cleanSub === '/dashboard') {
+                                            allowedUrls.add(fSlugPrefix);
+                                            allowedUrls.add(fSlugPrefix + '/foundation/dashboard');
+                                        } else if (cleanSub === '/kelola-campaign') {
+                                            allowedUrls.add(fSlugPrefix + '/admin/campaigns');
+                                            allowedUrls.add(fSlugPrefix + '/manage-campaigns');
+                                            allowedUrls.add(fSlugPrefix + '/foundation/campaigns');
+                                        }
+                                    } else {
+                                        var tenantSub = fSlugPrefix + (u.startsWith('/') ? u : '/' + u);
+                                        allowedUrls.add(tenantSub);
+                                    }
+                                }
+                            }
+                        }
+
+                        unique.forEach(function(item) {
+                            if (item.targetType === 'group' && Array.isArray(item.subMenus)) {
+                                item.subMenus.forEach(function(child) {
+                                    registerAllowed(child.url || child.routeUrl);
+                                });
+                            } else {
+                                registerAllowed(item.url || item.routeUrl);
+                            }
+                        });
+
+                        // Selesai sinkronisasi navigasi: otorisasi rute telah divalidasi penuh di sisi server (DynamicMenuAuthorizeFilter)
+                        $('#mainContent').addClass('authorized-ready');
+                    } else {
+                        // Jika role belum memiliki menu di MenuRoles, tampilkan info
+                        $('#dynamicSidebarMenus').html(`
+                            <div style="padding: 16px; color: #94a3b8; font-size: 13px; text-align: center;">
+                                <i class="fas fa-lock mb-2" style="font-size: 20px; display: block; opacity: 0.5;"></i>
+                                Belum ada menu yang dikonfigurasikan untuk peran Anda.
+                            </div>
+                        `);
+                        $('#mainContent').addClass('authorized-ready');
+                    }
+                });
+            }
+
+            var roleIds = currentUser.roleIds || (currentUser.roleId ? [currentUser.roleId] : []);
+
+            // Ambil data menu dari database berdasarkan roleIds
+            if (roleIds.length > 0) {
+                fetchAndSyncMenus(roleIds);
+            } else {
+                // Sinkronisasi ID peran dari API /roles jika roleId di session belum terdaftar
+                $.ajax({
+                    url: API_BASE_URL + '/roles',
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function (roles) {
+                        if (Array.isArray(roles)) {
+                            var matched = roles.find(function (r) {
+                                var rn = (r.name || '').toLowerCase();
+                                var rd = (r.displayName || '').toLowerCase();
+                                var curR = role.toLowerCase();
+                                return rn === curR || rd === curR || rn.indexOf(curR) !== -1 || curR.indexOf(rn) !== -1;
+                            });
+                            if (matched) {
+                                currentUser.roleId = matched.id;
+                                currentUser.roleIds = [matched.id];
+                                AuthSession.setUser(currentUser);
+                                fetchAndSyncMenus([matched.id]);
+                            }
+                        }
+                    }
+                });
+            }
+        });
+
+        // Global DataTables Default Configuration - 100% Mematuhi aturan_datatable.txt
+        if (window.jQuery && $.fn && $.fn.dataTable) {
+            $.extend(true, $.fn.dataTable.defaults, {
+                pageLength: 10,
+                lengthMenu: [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "Semua"]
+                ],
+                language: {
+                    lengthMenu: "Tampilkan _MENU_ data per halaman",
+                    zeroRecords: "Data tidak ditemukan",
+                    info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ total data",
+                    infoEmpty: "Menampilkan 0 sampai 0 dari 0 data",
+                    infoFiltered: "(difilter dari _MAX_ total data)",
+                    search: "Cari:",
+                    searchPlaceholder: "Ketik kata kunci...",
+                    paginate: {
+                        first: "«",
+                        last: "»",
+                        next: "›",
+                        previous: "‹"
+                    },
+                    processing: "Sedang memproses data...",
+                    loadingRecords: "Memuat data..."
+                }
+            });
+        }
+
+        // Global Currency Formatter
+        window.formatRupiah = function(number) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number || 0);
+        };
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

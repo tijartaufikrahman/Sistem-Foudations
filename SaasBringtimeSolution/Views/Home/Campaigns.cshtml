@@ -1,0 +1,401 @@
+@{
+    Layout = "_PublicLayout";
+    var slug = (ViewData["Slug"] as string) ?? "";
+    var domain = (ViewData["Domain"] as string) ?? "";
+    var tenant = (ViewData["Tenant"] as string) ?? (!string.IsNullOrEmpty(slug) ? slug : domain);
+    var foundationName = (ViewData["FoundationName"] as string) ?? "Yayasan";
+    ViewData["Title"] = $"Program Donasi & Bantuan Kemanusiaan - {foundationName}";
+}
+
+<style>
+    /* Hero Header */
+    .campaigns-hero {
+        background: linear-gradient(135deg, #0f766e 0%, #115e59 50%, #042f2e 100%);
+        color: #ffffff;
+        padding: 4.5rem 0 3.5rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    .campaigns-hero::before {
+        content: '';
+        position: absolute;
+        top: -40%;
+        right: -15%;
+        width: 500px;
+        height: 500px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(45,212,191,0.18) 0%, rgba(255,255,255,0) 70%);
+        pointer-events: none;
+    }
+
+    .badge-verified-hero {
+        background: rgba(45, 212, 191, 0.15);
+        color: #2dd4bf;
+        border: 1px solid rgba(45, 212, 191, 0.35);
+        border-radius: 50rem;
+        padding: 0.35rem 1rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    /* Filter Controls */
+    .campaign-filter-card {
+        background: #ffffff;
+        border-radius: 1rem;
+        border: 1px solid #e2e8f0;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
+        margin-top: -2rem;
+        position: relative;
+        z-index: 10;
+    }
+
+    .search-input-group {
+        position: relative;
+    }
+    .search-input-group i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+    }
+    .search-input-field {
+        width: 100%;
+        padding: 0.65rem 1rem 0.65rem 2.6rem;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 50rem;
+        font-size: 0.9rem;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-input-field:focus {
+        border-color: #0d9488;
+        box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+    }
+</style>
+
+<!-- Hero Section -->
+<section class="campaigns-hero">
+    <div class="container position-relative" style="z-index: 2;">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="badge-verified-hero mb-3">
+                    <i class="fas fa-heart text-danger"></i> Portal Program Kebaikan & Donasi
+                </div>
+                <h1 class="fw-bold mb-2 fs-2 text-white" id="campaignsPageTitle">Program Donasi & Bantuan Kemanusiaan</h1>
+                <p class="text-white-50 mb-0 fs-6" id="campaignsSubtitle">
+                    Salurkan donasi Anda secara transparan dan tepat sasaran melalui berbagai program kemanusiaan resmi dari @foundationName.
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                <span class="badge bg-white bg-opacity-10 text-white border border-white border-opacity-25 px-3 py-2 rounded-pill small">
+                    <i class="fas fa-shield-halved text-teal me-1" style="color: #2dd4bf;"></i> Berizin & Terverifikasi
+                </span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Filter & Search Toolbar -->
+<div class="container mb-4">
+    <div class="campaign-filter-card">
+        <div class="row g-3 align-items-center">
+            <!-- Search Field -->
+            <div class="col-lg-6">
+                <div class="search-input-group">
+                    <i class="fas fa-magnifying-glass"></i>
+                    <input type="text" id="campaignSearch" class="search-input-field" 
+                           placeholder="Cari program donasi, bantuan medis, bencana, santunan..." />
+                </div>
+            </div>
+            <!-- Category Pills & Info -->
+            <div class="col-lg-6 text-lg-end">
+                <div class="d-flex align-items-center justify-content-lg-end justify-content-between gap-2">
+                    <span class="text-muted small">Menampilkan: <strong class="text-dark" id="campaignCountBadge">Memuat...</strong></span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="resetCampaignFilters()" style="font-size: 12px;">
+                        <i class="fas fa-rotate-left me-1"></i> Reset Filter
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <hr class="my-3 opacity-25">
+
+        <!-- Horizontal Scrollable Category Pills -->
+        <div class="category-pill-scroll" id="categoryPillBar">
+            <button type="button" class="category-pill-btn active" data-cat="all">
+                <i class="fas fa-shapes text-teal"></i> Semua Program
+            </button>
+            <button type="button" class="category-pill-btn" data-cat="bencana_alam">
+                <i class="fas fa-house-chimney-crack text-danger"></i> Bencana Alam
+            </button>
+            <button type="button" class="category-pill-btn" data-cat="kesehatan">
+                <i class="fas fa-heart-pulse text-danger"></i> Medis & Pengobatan
+            </button>
+            <button type="button" class="category-pill-btn" data-cat="yatim">
+                <i class="fas fa-children text-warning"></i> Yatim & Dhuafa
+            </button>
+            <button type="button" class="category-pill-btn" data-cat="pendidikan">
+                <i class="fas fa-graduation-cap text-primary"></i> Pendidikan
+            </button>
+            <button type="button" class="category-pill-btn" data-cat="sosial">
+                <i class="fas fa-bowl-food text-success"></i> Sedekah Pangan
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Campaign Grid Section -->
+<section class="pb-5">
+    <div class="container">
+        <!-- Campaign Grid -->
+        <div class="row g-4" id="campaignList">
+            <!-- Skeleton Shimmer Placeholder -->
+            <div class="col-md-6 col-lg-4">
+                <div class="campaign-card-clean p-3 bg-white">
+                    <div class="skeleton-box mb-3" style="height: 180px;"></div>
+                    <div class="skeleton-box mb-2" style="height: 20px; width: 80%;"></div>
+                    <div class="skeleton-box mb-3" style="height: 14px; width: 60%;"></div>
+                    <div class="skeleton-box" style="height: 38px;"></div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="campaign-card-clean p-3 bg-white">
+                    <div class="skeleton-box mb-3" style="height: 180px;"></div>
+                    <div class="skeleton-box mb-2" style="height: 20px; width: 80%;"></div>
+                    <div class="skeleton-box mb-3" style="height: 14px; width: 60%;"></div>
+                    <div class="skeleton-box" style="height: 38px;"></div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="campaign-card-clean p-3 bg-white">
+                    <div class="skeleton-box mb-3" style="height: 180px;"></div>
+                    <div class="skeleton-box mb-2" style="height: 20px; width: 80%;"></div>
+                    <div class="skeleton-box mb-3" style="height: 14px; width: 60%;"></div>
+                    <div class="skeleton-box" style="height: 38px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+<script>
+    var currentTenant = '@tenant';
+    var currentSlug = '@slug';
+    var rawCampaigns = [];
+    var activeCategory = 'all';
+    var searchQuery = '';
+    var foundationObj = null;
+
+    if (!currentTenant) {
+        currentTenant = window.CONFIGURED_FOUNDATION_SLUG || '';
+    }
+
+    function resetCampaignFilters() {
+        activeCategory = 'all';
+        searchQuery = '';
+        $('#campaignSearch').val('');
+        $('.category-pill-btn').removeClass('active');
+        $('.category-pill-btn[data-cat="all"]').addClass('active');
+        renderCampaignGrid();
+    }
+
+    function renderCampaignGrid() {
+        var fName = foundationObj ? (foundationObj.name || foundationObj.Name || 'Yayasan') : '@foundationName';
+        var fLogo = foundationObj ? (foundationObj.logoUrl || foundationObj.LogoUrl || 'https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=60') : 'https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=60';
+
+        var filtered = rawCampaigns.filter(function (c) {
+            var matchesCat = (activeCategory === 'all') || ((c.category || '').toLowerCase() === activeCategory.toLowerCase());
+            var matchesSearch = true;
+            if (searchQuery) {
+                var q = searchQuery.toLowerCase();
+                var titleMatch = (c.title || '').toLowerCase().indexOf(q) !== -1;
+                var catMatch = (c.category || '').toLowerCase().indexOf(q) !== -1;
+                matchesSearch = titleMatch || catMatch;
+            }
+            return matchesCat && matchesSearch;
+        });
+
+        $('#campaignCountBadge').text(filtered.length + ' Program');
+
+        if (filtered.length > 0) {
+            var html = '';
+            filtered.forEach(function (c) {
+                var bannerUrl = c.bannerUrl || 'https://images.unsplash.com/photo-1593113598332-cd288d649433?w=600';
+                var progress = c.targetAmount > 0 ? Math.min(100, Math.round((c.collectedAmount / c.targetAmount) * 100)) : 0;
+                var categoryText = c.category ? c.category.replace('_', ' ').toUpperCase() : 'DONASI';
+
+                var detailUrl = '/Campaign/' + encodeURIComponent(c.slug);
+                var donateUrl = '/Donate/' + encodeURIComponent(c.slug);
+
+                html += `
+                    <div class="col-md-6 col-lg-4">
+                        <div class="campaign-card-clean">
+                            <div>
+                                <div class="campaign-img-clean">
+                                    <img src="${bannerUrl}" alt="${escHtml(c.title)}">
+                                    <span class="campaign-tag-clean">${escHtml(categoryText)}</span>
+                                </div>
+                                <div class="p-3">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <img src="${fLogo}" alt="${escHtml(fName)}" class="rounded-circle" style="width:20px;height:20px;object-fit:cover;">
+                                        <small class="text-muted fw-semibold text-truncate" style="max-width: 220px;">${escHtml(fName)}</small>
+                                        <i class="fas fa-circle-check text-teal ms-auto small" style="color:var(--brand-teal);"></i>
+                                    </div>
+                                    <h5 class="fw-bold text-dark mb-3" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.4;font-size:1rem;">
+                                        <a href="${detailUrl}" class="text-decoration-none text-dark hover-teal">
+                                            ${escHtml(c.title)}
+                                        </a>
+                                    </h5>
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between small mb-1">
+                                            <span class="text-muted" style="font-size: 11px;">Terkumpul</span>
+                                            <span class="fw-bold text-teal" style="color:var(--brand-teal); font-size:11px;">${progress}%</span>
+                                        </div>
+                                        <div class="progress" style="height: 6px; border-radius: 3px; background: #e2e8f0;">
+                                            <div class="progress-bar" style="width: ${progress}%; background: linear-gradient(90deg, #0d9488, #2dd4bf);"></div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-baseline mb-3">
+                                        <div>
+                                            <small class="text-muted d-block" style="font-size:10.5px;">Dana Terkumpul</small>
+                                            <span class="fw-bold text-dark" style="font-size:13.5px;">${formatRupiah(c.collectedAmount)}</span>
+                                        </div>
+                                        <div class="text-end">
+                                            <small class="text-muted d-block" style="font-size:10.5px;">Target</small>
+                                            <span class="text-muted small" style="font-size:11.5px;">${formatRupiah(c.targetAmount)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3 pt-0 d-flex gap-2">
+                                <a href="${detailUrl}" class="btn btn-light rounded-pill btn-sm w-50 py-2 fw-semibold text-muted border">
+                                    Detail Kisah
+                                </a>
+                                <a href="${donateUrl}" class="btn btn-brand rounded-pill btn-sm w-50 py-2 fw-bold text-white shadow-sm">
+                                    <i class="fas fa-heart me-1"></i> Donasi
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            $('#campaignList').html(html);
+        } else {
+            $('#campaignList').html(`
+                <div class="col-12 text-center py-5 bg-white rounded-4 border">
+                    <div class="mb-2"><i class="fas fa-search text-muted fa-2x opacity-50"></i></div>
+                    <h6 class="fw-bold text-dark mb-1">Tidak ada program yang sesuai</h6>
+                    <p class="text-muted small mb-3">Coba pilih kategori lain atau hapus kata kunci pencarian Anda.</p>
+                    <button class="btn btn-outline-brand rounded-pill btn-sm px-4" onclick="resetCampaignFilters()">
+                        Tampilkan Semua Program
+                    </button>
+                </div>
+            `);
+        }
+    }
+
+    function loadCampaigns(foundationId, fName, fLogo) {
+        var url = (foundationId && foundationId > 0) 
+            ? (API_BASE_URL + '/campaigns/foundation/' + foundationId) 
+            : (API_BASE_URL + '/campaigns');
+        $.ajax({
+            url: url,
+            type: 'GET',
+            success: function (data) {
+                var list = data || [];
+                rawCampaigns = list.filter(function (c) { return c.isActive !== false; });
+                renderCampaignGrid();
+            },
+            error: function () {
+                $('#campaignList').html('<div class="col-12 text-center py-4 text-danger">Gagal memuat program donasi.</div>');
+            }
+        });
+    }
+
+    function escHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    $(function () {
+        var serverFId = window.CONFIGURED_FOUNDATION_ID || @(ViewData["FoundationId"] != null ? ViewData["FoundationId"] : 0);
+        var serverFName = '@foundationName';
+        var serverFLogo = '@(ViewData["FoundationLogo"] ?? "")';
+
+        if (serverFId > 0) {
+            foundationObj = {
+                id: serverFId,
+                name: serverFName,
+                logoUrl: serverFLogo
+            };
+            loadCampaigns(serverFId, serverFName, serverFLogo);
+        } else {
+            // Ambil profil yayasan via id / slug
+            var fetchUrl = window.CONFIGURED_FOUNDATION_ID 
+                ? (API_BASE_URL + '/foundations/' + window.CONFIGURED_FOUNDATION_ID)
+                : (API_BASE_URL + '/foundations/slug/' + encodeURIComponent(currentTenant));
+
+            $.ajax({
+                url: fetchUrl,
+                type: 'GET',
+                dataType: 'json',
+                success: function (f) {
+                    if (f && (f.id || f.Id)) {
+                        foundationObj = f;
+                        var fName = f.name || f.Name || serverFName;
+                        var fLogo = f.logoUrl || f.LogoUrl || serverFLogo;
+                        loadCampaigns(f.id || f.Id, fName, fLogo);
+                    } else {
+                        loadCampaigns(0, serverFName, serverFLogo);
+                    }
+                },
+                error: function () {
+                    loadCampaigns(0, serverFName, serverFLogo);
+                }
+            });
+        }
+
+        // Search event
+        $('#campaignSearch').on('input', function () {
+            searchQuery = $(this).val().trim();
+            renderCampaignGrid();
+        });
+
+        // Category filter click event
+        $('.category-pill-btn').on('click', function () {
+            $('.category-pill-btn').removeClass('active');
+            $(this).addClass('active');
+            activeCategory = $(this).attr('data-cat') || 'all';
+            renderCampaignGrid();
+        });
+
+        // Cek query parameter URL (misal ?cat=medis atau ?q=...)
+        var urlParams = new URLSearchParams(window.location.search);
+        var catParam = urlParams.get('cat');
+        var qParam = urlParams.get('q');
+        if (catParam) {
+            var $btn = $('.category-pill-btn[data-cat="' + catParam + '"]');
+            if ($btn.length) {
+                $('.category-pill-btn').removeClass('active');
+                $btn.addClass('active');
+                activeCategory = catParam;
+            }
+        }
+        if (qParam) {
+            $('#campaignSearch').val(qParam);
+            searchQuery = qParam;
+        }
+    });
+</script>
+}

@@ -1,0 +1,890 @@
+@inject SaasBringtimeSolution.Services.IFoundationService FoundationService
+@{
+    Layout = null;
+    var currentFoundation = await FoundationService.GetCurrentFoundationAsync();
+    var foundationId = FoundationService.GetConfiguredFoundationId();
+    var foundationName = (ViewData["FoundationName"] as string) ?? currentFoundation?.Name ?? "Portal Mitra";
+    var foundationSlug = (ViewData["Slug"] as string) ?? currentFoundation?.Slug ?? "";
+    var foundationLogo = currentFoundation?.LogoUrl;
+    var initialTab = (ViewData["InitialTab"] as string) ?? "login";
+}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Masuk Akun - @foundationName</title>
+
+    <!-- Google Font: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome 6.5.1 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #eef7f5;
+            background-image:
+                radial-gradient(circle at 20% 30%, rgba(45, 212, 191, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(56, 189, 248, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 50% 100%, rgba(13, 148, 136, 0.08) 0%, transparent 40%);
+            padding: 24px 16px;
+        }
+        .login-wrapper {
+            width: 100%;
+            max-width: 420px;
+            position: relative;
+        }
+        .login-wrapper::before, .login-wrapper::after {
+            content: '';
+            position: fixed;
+            border-radius: 50%;
+            opacity: 0.07;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .login-wrapper::before {
+            width: 300px;
+            height: 300px;
+            background: #0d9488;
+            top: -80px;
+            right: -100px;
+        }
+        .login-wrapper::after {
+            width: 200px;
+            height: 200px;
+            background: #38bdf8;
+            bottom: -60px;
+            left: -80px;
+        }
+        .login-card {
+            position: relative;
+            z-index: 1;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 1px 3px rgba(15,23,42,.04), 0 10px 40px rgba(15,23,42,.08);
+            padding: 44px 36px 36px;
+            width: 100%;
+            border: 1px solid rgba(15,23,42,.06);
+        }
+        @@media (max-width:480px) {
+            body { padding: 12px; }
+            .login-card { padding: 32px 22px 28px; border-radius: 16px; }
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .login-header .logo {
+            width: 68px;
+            height: 68px;
+            background: linear-gradient(135deg, #2dd4bf 0%, #0d9488 100%);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 18px;
+            box-shadow: 0 8px 24px rgba(13,148,136,.25);
+            transform: rotate(-3deg);
+            transition: transform .3s ease;
+            overflow: hidden;
+        }
+        .login-header .logo:hover {
+            transform: rotate(0deg) scale(1.05);
+        }
+        .login-header .logo i {
+            font-size: 30px;
+            color: #ffffff;
+        }
+        .login-header .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .login-header h1 {
+            font-size: 21px;
+            color: #0f172a;
+            margin-bottom: 4px;
+            font-weight: 700;
+            letter-spacing: -.02em;
+        }
+        .login-header p {
+            color: #64748b;
+            font-size: 13.5px;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 7px;
+        }
+        .input-wrapper {
+            position: relative;
+        }
+        .input-wrapper i.fi {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 15px;
+            transition: color .2s;
+        }
+        .input-wrapper:focus-within i.fi {
+            color: #0d9488;
+        }
+        .form-group input[type=email], .form-group input[type=password], .form-group input[type=text] {
+            width: 100%;
+            padding: 12px 42px 12px 42px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+            color: #1e293b;
+            background: #f8fafc;
+            transition: all .2s;
+            outline: none;
+            font-family: inherit;
+        }
+        .form-group input:focus {
+            border-color: #2dd4bf;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(45,212,191,.15);
+        }
+        .form-group input::placeholder {
+            color: #94a3b8;
+        }
+        .btn-pwd-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px;
+        }
+        .btn-pwd-toggle:hover {
+            color: #0d9488;
+        }
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        .form-check input {
+            width: auto;
+            padding: 0;
+            accent-color: #0d9488;
+            cursor: pointer;
+        }
+        .form-check label {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 400;
+            margin: 0;
+            cursor: pointer;
+        }
+        .forgot-link {
+            text-align: right;
+            margin-bottom: 0;
+        }
+        .forgot-link a {
+            color: #0d9488;
+            font-size: 12.5px;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .forgot-link a:hover {
+            text-decoration: underline;
+        }
+        .btn-login {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, #2dd4bf 0%, #0d9488 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .25s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 6px;
+            box-shadow: 0 4px 14px rgba(13,148,136,.3);
+            font-family: inherit;
+        }
+        .btn-login:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(13,148,136,.4);
+        }
+        .btn-login:active {
+            transform: translateY(0);
+        }
+        .btn-login:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .error-msg {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 11px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            border: 1px solid #fecaca;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .success-msg {
+            background: #f0fdf4;
+            color: #166534;
+            padding: 11px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            border: 1px solid #bbf7d0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .login-footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .register-switch-link {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 13px;
+            color: #64748b;
+        }
+        .register-switch-link a {
+            color: #0d9488;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .register-switch-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* ======================================================== */
+        /* DEVELOPMENT ONLY: DAFTAR USER & QUICK LOGIN DI LUAR CARD */
+        /* ======================================================== */
+        .dev-users-box {
+            margin-top: 22px;
+            position: relative;
+            z-index: 1;
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 18px 20px;
+            box-shadow: 0 1px 3px rgba(15,23,42,.04), 0 8px 30px rgba(15,23,42,.06);
+            border: 1.5px dashed #2dd4bf;
+        }
+        .dev-users-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .dev-users-header h2 {
+            font-size: 13px;
+            font-weight: 700;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+        .dev-tag {
+            font-size: 10px;
+            font-weight: 700;
+            background: #fef3c7;
+            color: #b45309;
+            padding: 2px 8px;
+            border-radius: 999px;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+        .dev-users-desc {
+            font-size: 11.5px;
+            color: #64748b;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+        .dev-user-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 11px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            transition: all .2s;
+            cursor: pointer;
+        }
+        .dev-user-item:hover {
+            border-color: #2dd4bf;
+            background: #f0fdfa;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(13,148,136,.12);
+        }
+        .dev-user-item:last-child {
+            margin-bottom: 0;
+        }
+        .dev-user-details {
+            min-width: 0;
+            flex: 1;
+        }
+        .dev-user-role-badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 1px 7px;
+            border-radius: 5px;
+            color: #ffffff;
+            margin-bottom: 2px;
+        }
+        .dev-user-name {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #0f172a;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .dev-user-email {
+            font-size: 11.5px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .dev-btn-login {
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #2dd4bf 0%, #0d9488 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 11.5px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(13,148,136,.25);
+            transition: all .2s;
+        }
+        .dev-btn-login:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 10px rgba(13,148,136,.35);
+        }
+    </style>
+
+    <script>
+        window.CONFIGURED_FOUNDATION_ID = @foundationId;
+        window.CONFIGURED_FOUNDATION_NAME = "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(foundationName))";
+        window.CONFIGURED_FOUNDATION_SLUG = "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(foundationSlug))";
+    </script>
+</head>
+<body>
+    <div class="login-wrapper">
+        <!-- Main Login Card (Matching Project 8) -->
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo" id="headerLogoBox">
+                    @if (!string.IsNullOrEmpty(foundationLogo))
+                    {
+                        <img src="@foundationLogo" alt="@foundationName" onerror="this.outerHTML='<i class=\'fas fa-hand-holding-heart\'></i>'" />
+                    }
+                    else
+                    {
+                        <i class="fas fa-hand-holding-heart"></i>
+                    }
+                </div>
+                <h1 id="brandTitle">@foundationName</h1>
+                <p id="brandSubtitle">Masuk ke akun Anda</p>
+            </div>
+
+            <!-- Alert Notification -->
+            <div id="alertBox" style="display: none;"></div>
+
+            <!-- Login Form -->
+            <form id="formLogin" onsubmit="event.preventDefault(); submitLogin();" style="@(initialTab == "register" ? "display:none;" : "")">
+                <div class="form-group">
+                    <label for="Email">Email</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope fi"></i>
+                        <input type="email" id="Email" name="Email" placeholder="Masukkan email" autocomplete="email" required />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="Password">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock fi"></i>
+                        <input type="password" id="Password" name="Password" placeholder="Masukkan password" autocomplete="current-password" required />
+                        <button type="button" class="btn-pwd-toggle" onclick="togglePasswordVisibility('Password', this)">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+                    <div class="form-check">
+                        <input type="checkbox" id="RememberMe" checked />
+                        <label for="RememberMe">Ingat saya</label>
+                    </div>
+                    <div class="forgot-link">
+                        <a href="/" title="Kembali ke Beranda">Beranda</a>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login" id="btnLoginSubmit">
+                    <i class="fas fa-arrow-right-to-bracket"></i>
+                    <span>Masuk</span>
+                </button>
+
+                <div class="register-switch-link">
+                    Belum punya akun? <a href="javascript:void(0)" onclick="toggleRegisterView(true)">Daftar sebagai Donatur</a>
+                </div>
+            </form>
+
+            <!-- Register Form (Toggleable) -->
+            <form id="formRegister" onsubmit="event.preventDefault(); submitRegister();" style="@(initialTab != "register" ? "display:none;" : "")">
+                <div class="form-group">
+                    <label for="RegName">Nama Lengkap</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user fi"></i>
+                        <input type="text" id="RegName" placeholder="Masukkan nama lengkap" required />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="RegEmail">Email</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope fi"></i>
+                        <input type="email" id="RegEmail" placeholder="Masukkan email" required />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="RegPhone">Nomor WhatsApp (Opsional)</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-phone fi"></i>
+                        <input type="text" id="RegPhone" placeholder="08xxxxxxxxxx" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="RegPassword">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock fi"></i>
+                        <input type="password" id="RegPassword" placeholder="Minimal 6 karakter" required />
+                        <button type="button" class="btn-pwd-toggle" onclick="togglePasswordVisibility('RegPassword', this)">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="RegConfirmPassword">Konfirmasi Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-shield-alt fi"></i>
+                        <input type="password" id="RegConfirmPassword" placeholder="Ulangi password" required />
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login" id="btnRegisterSubmit">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Daftar Donatur Sekarang</span>
+                </button>
+
+                <div class="register-switch-link">
+                    Sudah punya akun? <a href="javascript:void(0)" onclick="toggleRegisterView(false)">Masuk sekarang</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- DEVELOPMENT ONLY: DAFTAR USER & QUICK LOGIN DI LUAR CARD -->
+        <!-- (Bisa dihapus kapan saja setelah tahap development usai)  -->
+        <!-- ======================================================== -->
+        <div class="dev-users-box" id="devUsersBox">
+            <div class="dev-users-header">
+                <h2><i class="fas fa-users-gear" style="color:#0d9488;"></i> Akun Pengujian (Development)</h2>
+                <span class="dev-tag">Dev Only</span>
+            </div>
+            <p class="dev-users-desc">
+                Berikut daftar akun dengan peran (role) dan email. Klik akun atau tombol <strong>Login</strong> untuk langsung masuk:
+            </p>
+
+            <div id="devUsersContainer">
+                <div style="font-size:12px; color:#94a3b8; text-align:center; padding:10px;">
+                    <i class="fas fa-spinner fa-spin me-1"></i> Memuat daftar akun...
+                </div>
+            </div>
+        </div>
+
+        <div class="login-footer">
+            <span id="footerBrand">@foundationName</span> &copy; 2026. All rights reserved.
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="~/js/api-config.js" asp-append-version="true"></script>
+
+    <script>
+        // Bersihkan seluruh sisa sesi jika baru saja logout
+        if (window.location.search.indexOf('logout=') > -1) {
+            try {
+                if (typeof AuthSession !== 'undefined' && AuthSession.clearAll) {
+                    AuthSession.clearAll();
+                } else {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                }
+            } catch(e) {}
+        }
+
+        function toggleRegisterView(showRegister) {
+            clearAlert();
+            if (showRegister) {
+                $('#formLogin').hide();
+                $('#formRegister').fadeIn(200);
+                $('#brandSubtitle').text('Daftar akun donatur baru');
+            } else {
+                $('#formRegister').hide();
+                $('#formLogin').fadeIn(200);
+                $('#brandSubtitle').text('Masuk ke akun Anda');
+            }
+        }
+
+        function togglePasswordVisibility(inputId, btn) {
+            var input = document.getElementById(inputId);
+            var icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+
+        function showAlert(msg, isSuccess) {
+            var cls = isSuccess ? 'success-msg' : 'error-msg';
+            var icon = isSuccess ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+            $('#alertBox').removeClass().addClass(cls).html('<i class="' + icon + '"></i> <span>' + escHtml(msg) + '</span>').fadeIn(150);
+        }
+
+        function clearAlert() {
+            $('#alertBox').hide().empty();
+        }
+
+        // Quick login helper: mengisi form dan langsung trigger login
+        function devQuickLogin(email, password) {
+            toggleRegisterView(false);
+            $('#Email').val(email);
+            $('#Password').val(password || '123');
+            submitLogin(password || '123');
+        }
+
+        function submitLogin(fallbackPassword) {
+            clearAlert();
+            var email = $('#Email').val().trim();
+            var password = $('#Password').val();
+            var rememberMe = $('#RememberMe').is(':checked');
+
+            if (!email || !password) {
+                showAlert('Silakan masukkan email dan password.', false);
+                return;
+            }
+
+            var $btn = $('#btnLoginSubmit');
+            var originalText = $btn.html();
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> <span>Memproses...</span>');
+
+            var payload = {
+                email: email,
+                password: password,
+                rememberMe: rememberMe,
+                foundationId: window.CONFIGURED_FOUNDATION_ID || null,
+                foundationSlug: window.CONFIGURED_FOUNDATION_SLUG || null
+            };
+
+            $.ajax({
+                url: API_BASE_URL + '/auth/login',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                success: function (res) {
+                    $btn.html('<i class="fas fa-check"></i> <span>Berhasil!</span>');
+                    showAlert(res.message || 'Login berhasil! Mengalihkan...', true);
+
+                    var user = res.user || {};
+                    var token = res.token || res.jwtToken;
+                    user.token = token;
+
+                    var roles = user.roles || [];
+                    var roleLower = (roles[0] || user.roleName || '').toLowerCase();
+                    var isSuperAdmin = roles.some(function(r) { return (r || '').toLowerCase().includes('super') || (r || '').toLowerCase() === 'super_admin'; }) || user.roleId === 4;
+                    var isDonor = roleLower.includes('donor') || roleLower.includes('donatur');
+
+                    var scope = isDonor ? 'donor' : (isSuperAdmin ? 'admin' : 'foundation');
+
+                    AuthSession.setUser(user, scope);
+                    if (token) {
+                        AuthSession.setToken(token, scope);
+                    }
+
+                    setTimeout(function () {
+                        if (isSuperAdmin) {
+                            window.location.href = '/Dashboard';
+                        } else if (isDonor) {
+                            window.location.href = '/Donor/Dashboard';
+                        } else {
+                            window.location.href = '/Foundation/Dashboard';
+                        }
+                    }, 400);
+                },
+                error: function (xhr) {
+                    // Jika login gagal dan password '123' tidak cocok, coba otomatis dengan '123456'
+                    if (password === '123') {
+                        $('#Password').val('123456');
+                        submitLogin('123456');
+                        return;
+                    }
+
+                    $btn.prop('disabled', false).html(originalText);
+                    var msg = 'Email atau password salah. Silakan coba lagi.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    }
+                    showAlert(msg, false);
+                }
+            });
+        }
+
+        function submitRegister() {
+            clearAlert();
+            var name = $('#RegName').val().trim();
+            var email = $('#RegEmail').val().trim();
+            var phone = $('#RegPhone').val().trim();
+            var password = $('#RegPassword').val();
+            var confirmPassword = $('#RegConfirmPassword').val();
+
+            if (!name || !email || !password) {
+                showAlert('Nama, email, dan password wajib diisi.', false);
+                return;
+            }
+
+            if (password.length < 6) {
+                showAlert('Password minimal terdiri dari 6 karakter.', false);
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showAlert('Konfirmasi password tidak cocok.', false);
+                return;
+            }
+
+            var $btn = $('#btnRegisterSubmit');
+            var originalText = $btn.html();
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> <span>Mendaftarkan...</span>');
+
+            var payload = {
+                name: name,
+                email: email,
+                phoneNumber: phone || null,
+                password: password,
+                foundationId: window.CONFIGURED_FOUNDATION_ID || null,
+                foundationSlug: window.CONFIGURED_FOUNDATION_SLUG || null
+            };
+
+            $.ajax({
+                url: API_BASE_URL + '/auth/register',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                success: function (res) {
+                    $btn.prop('disabled', false).html(originalText);
+                    showAlert('Pendaftaran akun donatur berhasil! Mengalihkan ke login...', true);
+
+                    setTimeout(function () {
+                        devQuickLogin(email, password);
+                    }, 800);
+                },
+                error: function (xhr) {
+                    $btn.prop('disabled', false).html(originalText);
+                    var msg = 'Pendaftaran gagal. Silakan coba lagi.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    }
+                    showAlert(msg, false);
+                }
+            });
+        }
+
+        // Render Development Users Dinamis
+        function renderDevUsers(users) {
+            if (!users || users.length === 0) {
+                $('#devUsersContainer').html('<div style="font-size:12px; color:#94a3b8; text-align:center; padding:10px;">Belum ada akun pengujian terdaftar.</div>');
+                return;
+            }
+
+            var html = '';
+            users.forEach(function (u) {
+                var badgeColor = u.badgeColor || '#0d9488';
+                var role = u.role || 'Pengguna';
+                var name = u.name || '-';
+                var email = u.email || '-';
+
+                html += `
+                    <div class="dev-user-item" onclick="devQuickLogin('${escHtml(email)}', '123')">
+                        <div class="dev-user-details">
+                            <span class="dev-user-role-badge" style="background:${badgeColor};">${escHtml(role)}</span>
+                            <div class="dev-user-name">${escHtml(name)}</div>
+                            <div class="dev-user-email"><i class="fas fa-envelope"></i> ${escHtml(email)}</div>
+                        </div>
+                        <button type="button" class="dev-btn-login" onclick="event.stopPropagation(); devQuickLogin('${escHtml(email)}', '123')">
+                            <i class="fas fa-arrow-right-to-bracket"></i> Login
+                        </button>
+                    </div>
+                `;
+            });
+            $('#devUsersContainer').html(html);
+        }
+
+        function loadDevAccounts() {
+            var fId = window.CONFIGURED_FOUNDATION_ID || 0;
+            var url = API_BASE_URL + '/auth/dev-accounts?foundationId=' + fId;
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                dataType: 'json',
+                success: function (res) {
+                    if (res && res.data && res.data.length > 0) {
+                        renderDevUsers(res.data);
+                    } else {
+                        // Fallback fallback dinamis jika endpoint belum mengembalikan data
+                        fetchFallbackAccounts(fId);
+                    }
+                },
+                error: function () {
+                    fetchFallbackAccounts(fId);
+                }
+            });
+        }
+
+        function fetchFallbackAccounts(fId) {
+            // Ambil dari /api/foundations/{id}
+            if (fId > 0) {
+                $.ajax({
+                    url: API_BASE_URL + '/foundations/' + fId,
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function (f) {
+                        var accounts = [
+                            { role: 'Super Admin', name: 'Software House Administrator', email: 'admin@@softwarehouse.com', badgeColor: '#4f46e5' }
+                        ];
+                        if (f) {
+                            var fuList = f.foundationUsers || [];
+                            if (fuList.length > 0 && fuList[0].user) {
+                                accounts.push({
+                                    role: 'Foundation Admin (PIC)',
+                                    name: fuList[0].user.name || f.name,
+                                    email: fuList[0].user.email || ('pic@@' + (f.slug || 'yayasan') + '.org'),
+                                    badgeColor: '#0d9488'
+                                });
+                            } else {
+                                accounts.push({
+                                    role: 'Foundation Admin (PIC)',
+                                    name: f.name || 'Pengurus Yayasan',
+                                    email: 'admin@@' + (f.slug || 'yayasan') + '.org',
+                                    badgeColor: '#0d9488'
+                                });
+                            }
+                        }
+                        accounts.push({
+                            role: 'Donatur',
+                            name: 'Ahmad Donatur Syariah',
+                            email: 'donatur@@gmail.com',
+                            badgeColor: '#0284c7'
+                        });
+                        renderDevUsers(accounts);
+                    },
+                    error: function () {
+                        renderDevUsers([
+                            { role: 'Super Admin', name: 'Software House Admin', email: 'admin@@softwarehouse.com', badgeColor: '#4f46e5' },
+                            { role: 'Foundation Admin (PIC)', name: 'Pengurus Yayasan', email: 'admin@@mitra.org', badgeColor: '#0d9488' },
+                            { role: 'Donatur', name: 'Donatur Umum', email: 'donatur@@gmail.com', badgeColor: '#0284c7' }
+                        ]);
+                    }
+                });
+            } else {
+                renderDevUsers([
+                    { role: 'Super Admin', name: 'Software House Admin', email: 'admin@@softwarehouse.com', badgeColor: '#4f46e5' },
+                    { role: 'Foundation Admin (PIC)', name: 'Pengurus Yayasan', email: 'admin@@mitra.org', badgeColor: '#0d9488' },
+                    { role: 'Donatur', name: 'Donatur Umum', email: 'donatur@@gmail.com', badgeColor: '#0284c7' }
+                ]);
+            }
+        }
+
+        function loadFoundationDynamicProfile() {
+            var fId = window.CONFIGURED_FOUNDATION_ID || 0;
+            if (fId <= 0) return;
+
+            $.ajax({
+                url: API_BASE_URL + '/foundations/' + fId,
+                type: 'GET',
+                dataType: 'json',
+                success: function (f) {
+                    if (f && f.name) {
+                        document.title = 'Masuk Akun - ' + f.name;
+                        $('#brandTitle').text(f.name);
+                        $('#footerBrand').text(f.name);
+                        if (f.logoUrl) {
+                            $('#headerLogoBox').html('<img src="' + f.logoUrl + '" alt="' + escHtml(f.name) + '" onerror="this.outerHTML=\'<i class=\\\'fas fa-hand-holding-heart\\\'></i>\'">');
+                        }
+                    }
+                }
+            });
+        }
+
+        $(document).ready(function () {
+            loadDevAccounts();
+            loadFoundationDynamicProfile();
+        });
+    </script>
+</body>
+</html>
